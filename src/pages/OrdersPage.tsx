@@ -16,6 +16,8 @@ const OrdersPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [customerFilter, setCustomerFilter] = useState('');
+  const [supplierFilter, setSupplierFilter] = useState('');
   
   useEffect(() => {
     const loadOrders = async () => {
@@ -46,6 +48,8 @@ const OrdersPage: React.FC = () => {
     if (statusFilter !== 'all' && order.status !== statusFilter) return false;
     if (startDate && order.date < startDate) return false;
     if (endDate && order.date > endDate) return false;
+    if (customerFilter && (!order.customer || !order.customer.toLowerCase().includes(customerFilter.toLowerCase()))) return false;
+    if (supplierFilter && (!order.supplier || !order.supplier.toLowerCase().includes(supplierFilter.toLowerCase()))) return false;
     
     return true;
   });
@@ -55,6 +59,8 @@ const OrdersPage: React.FC = () => {
     setStatusFilter('all');
     setStartDate('');
     setEndDate(new Date().toISOString().split('T')[0]);
+    setCustomerFilter('');
+    setSupplierFilter('');
   };
 
   const handleRowClick = (orderId: string) => {
@@ -62,10 +68,10 @@ const OrdersPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Manage Orders</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Manage Orders</h1>
       
-      <div className="mb-6 flex flex-col md:flex-row gap-3">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-grow">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
@@ -73,7 +79,7 @@ const OrdersPage: React.FC = () => {
           <input
             type="text"
             placeholder="Search orders..."
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -101,11 +107,11 @@ const OrdersPage: React.FC = () => {
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Order Type</label>
               <select
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value as 'all' | 'sale' | 'purchase')}
               >
@@ -118,7 +124,7 @@ const OrdersPage: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700">Status</label>
               <select
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -131,10 +137,32 @@ const OrdersPage: React.FC = () => {
             </div>
             
             <div>
+              <label className="block text-sm font-medium text-gray-700">Customer</label>
+              <input
+                type="text"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                value={customerFilter}
+                onChange={(e) => setCustomerFilter(e.target.value)}
+                placeholder="Filter by customer..."
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Supplier</label>
+              <input
+                type="text"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                value={supplierFilter}
+                onChange={(e) => setSupplierFilter(e.target.value)}
+                placeholder="Filter by supplier..."
+              />
+            </div>
+            
+            <div>
               <label className="block text-sm font-medium text-gray-700">From Date</label>
               <input
                 type="date"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
               />
@@ -144,7 +172,7 @@ const OrdersPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700">To Date</label>
               <input
                 type="date"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
@@ -173,7 +201,7 @@ const OrdersPage: React.FC = () => {
           <p className="mt-1 text-sm text-gray-500">
             Try adjusting your filters or create a new order
           </p>
-          <div className="mt-6 flex justify-center space-x-4">
+          <div className="mt-6 flex flex-col sm:flex-row justify-center gap-4">
             <button
               onClick={() => navigate('/sales')}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -194,25 +222,25 @@ const OrdersPage: React.FC = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Order ID
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Type
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Customer/Supplier
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Total Qty
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Remaining
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                 </tr>
@@ -224,36 +252,37 @@ const OrdersPage: React.FC = () => {
                     onClick={() => handleRowClick(order.id)}
                     className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       <div className="flex items-center">
                         {order.type === 'sale' ? (
                           <Truck className="h-5 w-5 text-blue-600 mr-2" />
                         ) : (
                           <Package className="h-5 w-5 text-emerald-600 mr-2" />
                         )}
-                        {order.id}
+                        <span className="hidden sm:inline">{order.id}</span>
+                        <span className="sm:hidden">{order.id.slice(-8)}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
                       {order.type}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDateForDisplay(order.date)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {order.type === 'sale' ? order.customer : order.supplier}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {order.totalQuantity}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`${
                         order.remainingQuantity > 0 ? 'text-amber-600' : 'text-green-600'
                       } font-medium`}>
                         {order.remainingQuantity}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         order.status === 'completed'
                           ? 'bg-green-100 text-green-800'
