@@ -1,0 +1,280 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getAllOrders } from '../services/orderService';
+import { Order } from '../types';
+import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
+import { Package, Truck, Search, Filter, X } from 'lucide-react';
+
+const OrdersPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<'all' | 'sale' | 'purchase'>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const allOrders = await getAllOrders();
+        allOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setOrders(allOrders);
+      } catch (error) {
+        console.error('Error loading orders:', error);
+        setError('Failed to load orders. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadOrders();
+  }, []);
+
+  const filteredOrders = orders.filter(order => {
+    const query = searchQuery.toLowerCase();
+    const matchesSearch = 
+      order.id.toLowerCase().includes(query) ||
+      (order.customer?.toLowerCase().includes(query) || false) ||
+      (order.supplier?.toLowerCase().includes(query) || false);
+    
+    if (!matchesSearch) return false;
+    if (typeFilter !== 'all' && order.type !== typeFilter) return false;
+    if (statusFilter !== 'all' && order.status !== statusFilter) return false;
+    if (startDate && order.date < startDate) return false;
+    if (endDate && order.date > endDate) return false;
+    
+    return true;
+  });
+
+  const clearFilters = () => {
+    setTypeFilter('all');
+    setStatusFilter('all');
+    setStartDate('');
+    setEndDate(new Date().toISOString().split('T')[0]);
+  };
+
+  const handleRowClick = (orderId: string) => {
+    navigate(`/orders/${orderId}`);
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Manage Orders</h1>
+      
+      <div className="mb-6 flex flex-col md:flex-row gap-3">
+        <div className="relative flex-grow">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search orders..."
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <Filter className="h-5 w-5 mr-2" />
+          Filters
+        </button>
+      </div>
+
+      {showFilters && (
+        <div className="bg-white p-4 rounded-lg shadow mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-medium text-gray-700">Filters</h3>
+            <button 
+              onClick={clearFilters}
+              className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Clear filters
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Order Type</label>
+              <select
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value as 'all' | 'sale' | 'purchase')}
+              >
+                <option value="all">All Types</option>
+                <option value="sale">Sales</option>
+                <option value="purchase">Purchases</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <select
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="partial">Partial</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">From Date</label>
+              <input
+                type="date"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">To Date</label>
+              <input
+                type="date"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="bg-white shadow rounded-lg p-6 text-center">
+          <h3 className="text-lg font-medium text-gray-900">No orders found</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Try adjusting your filters or create a new order
+          </p>
+          <div className="mt-6 flex justify-center space-x-4">
+            <button
+              onClick={() => navigate('/sales')}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Create Sale
+            </button>
+            <button
+              onClick={() => navigate('/purchases')}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+            >
+              Create Purchase
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Order ID
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Customer/Supplier
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Qty
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Remaining
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredOrders.map((order) => (
+                  <tr
+                    key={order.id}
+                    onClick={() => handleRowClick(order.id)}
+                    className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <div className="flex items-center">
+                        {order.type === 'sale' ? (
+                          <Truck className="h-5 w-5 text-blue-600 mr-2" />
+                        ) : (
+                          <Package className="h-5 w-5 text-emerald-600 mr-2" />
+                        )}
+                        {order.id}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                      {order.type}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDateForDisplay(order.date)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {order.type === 'sale' ? order.customer : order.supplier}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {order.totalQuantity}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={`${
+                        order.remainingQuantity > 0 ? 'text-amber-600' : 'text-green-600'
+                      } font-medium`}>
+                        {order.remainingQuantity}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        order.status === 'completed'
+                          ? 'bg-green-100 text-green-800'
+                          : order.status === 'partial'
+                          ? 'bg-amber-100 text-amber-800'
+                          : order.status === 'cancelled'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default OrdersPage;

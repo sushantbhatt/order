@@ -1,0 +1,51 @@
+import { Order, OrderStatus } from '../types';
+
+// Generate a sequential order ID with JIPL prefix
+export const generateOrderId = (type: 'sale' | 'purchase'): string => {
+  const prefix = 'JIPL';
+  const date = new Date();
+  const year = date.getFullYear().toString().slice(-2);
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `${prefix}${type === 'sale' ? 'S' : 'P'}${year}${month}${day}${random}`;
+};
+
+// Format date to YYYY-MM-DD
+export const formatDate = (date: Date): string => {
+  return date.toISOString().split('T')[0];
+};
+
+// Get today's date in YYYY-MM-DD format
+export const getTodayDate = (): string => {
+  return formatDate(new Date());
+};
+
+// Calculate order status based on remaining quantity
+export const calculateOrderStatus = (order: Order): OrderStatus => {
+  if (order.remainingQuantity === order.totalQuantity) {
+    return 'pending';
+  } else if (order.remainingQuantity === 0) {
+    return 'completed';
+  } else {
+    return 'partial';
+  }
+};
+
+// Format date to readable format (e.g., Jan 1, 2025)
+export const formatDateForDisplay = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+// Format currency
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amount);
+};
