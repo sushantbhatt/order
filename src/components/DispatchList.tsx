@@ -44,8 +44,7 @@ const DispatchList: React.FC<DispatchListProps> = ({ dispatches }) => {
                 {dispatch.quantity}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {/* ${dispatch.dispatchPrice != null ? dispatch.dispatchPrice.toFixed(2) : '-'} */}
-                ${typeof dispatch.dispatchPrice === 'number' ? dispatch.dispatchPrice.toFixed(2) : '-'}
+                ${dispatch.dispatch_price?.toFixed(2) || '0.00'}
               </td>
               <td className="px-3 py-4 text-sm text-gray-500">
                 {dispatch.notes || '-'}
