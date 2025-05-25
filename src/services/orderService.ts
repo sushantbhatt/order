@@ -222,7 +222,8 @@ export const createDispatch = async (orderId: string, dispatchData: Partial<Disp
       quantity: dispatchData.quantity || 0,
       notes: dispatchData.notes,
       user_id: session.session.user.id,
-      dispatch_price: dispatchData.dispatchPrice || 0
+      dispatch_price: dispatchData.dispatchPrice || 0,
+      invoice_number: dispatchData.invoiceNumber
     })
     .select()
     .single();

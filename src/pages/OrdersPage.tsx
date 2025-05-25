@@ -67,6 +67,12 @@ const OrdersPage: React.FC = () => {
     navigate(`/orders/${orderId}`);
   };
 
+  const calculateTotalAmount = (order: Order) => {
+    return order.items.reduce((sum, item) => {
+      return sum + (item.price * item.quantity) + item.commission;
+    }, 0);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
       <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Manage Orders</h1>
@@ -241,6 +247,12 @@ const OrdersPage: React.FC = () => {
                     Remaining
                   </th>
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Price
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Commission
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                 </tr>
@@ -281,6 +293,12 @@ const OrdersPage: React.FC = () => {
                       } font-medium`}>
                         {order.remainingQuantity}
                       </span>
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ${order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
+                    </td>
+                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ${order.items.reduce((sum, item) => sum + item.commission, 0).toFixed(2)}
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${

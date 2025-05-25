@@ -24,6 +24,9 @@ const DispatchList: React.FC<DispatchListProps> = ({ dispatches }) => {
               Date
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+              Invoice #
+            </th>
+            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               Quantity
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -41,10 +44,13 @@ const DispatchList: React.FC<DispatchListProps> = ({ dispatches }) => {
                 {formatDateForDisplay(dispatch.date)}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                {dispatch.invoiceNumber || '-'}
+              </td>
+              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                 {dispatch.quantity}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                ${dispatch.dispatch_price?.toFixed(2) || '0.00'}
+                ${dispatch.dispatchPrice?.toFixed(2) || '0.00'}
               </td>
               <td className="px-3 py-4 text-sm text-gray-500">
                 {dispatch.notes || '-'}

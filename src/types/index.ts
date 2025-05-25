@@ -32,6 +32,7 @@ export interface Dispatch {
   date: string;
   quantity: number;
   dispatchPrice: number;
+  invoiceNumber?: string;
   notes?: string;
   createdAt: string;
 }

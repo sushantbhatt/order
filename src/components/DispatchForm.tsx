@@ -13,6 +13,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
   const [date, setDate] = useState(getTodayDate());
   const [quantity, setQuantity] = useState(Math.min(10, order.remainingQuantity));
   const [dispatchPrice, setDispatchPrice] = useState(0);
+  const [invoiceNumber, setInvoiceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +22,6 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
     e.preventDefault();
     setError(null);
     
-    // Validate quantity
     if (quantity <= 0) {
       setError('Quantity must be greater than 0');
       return;
@@ -32,7 +32,6 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
       return;
     }
 
-    // Validate price
     if (dispatchPrice < 0) {
       setError('Price cannot be negative');
       return;
@@ -45,15 +44,16 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
         date,
         quantity,
         dispatchPrice,
+        invoiceNumber,
         notes
       });
       
       onDispatchCreated();
       
-      // Reset form
       setDate(getTodayDate());
       setQuantity(Math.min(10, order.remainingQuantity));
       setDispatchPrice(0);
+      setInvoiceNumber('');
       setNotes('');
     } catch (error) {
       console.error('Error creating dispatch:', error);
@@ -119,6 +119,19 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
             step="0.01"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="invoice-number" className="block text-sm font-medium text-gray-700">
+            Invoice Number
+          </label>
+          <input
+            type="text"
+            id="invoice-number"
+            value={invoiceNumber}
+            onChange={(e) => setInvoiceNumber(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
       </div>
