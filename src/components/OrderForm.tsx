@@ -14,7 +14,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ type, onOrderCreated }) => {
   const [date, setDate] = useState(getTodayDate());
   const [contactName, setContactName] = useState('');
   const [items, setItems] = useState<OrderItem[]>([
-    { id: `item-${Date.now()}`, name: '', quantity: 1, unit: 'pcs', price: 0, commission: 0 }
+    { id: `item-${Date.now()}`, name: '', quantity: null, unit: 'pcs', price: null, commission: null }
   ]);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,10 +24,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ type, onOrderCreated }) => {
     setItems([...items, { 
       id: `item-${Date.now()}`, 
       name: '', 
-      quantity: 1, 
+      quantity: null, 
       unit: 'pcs',
-      price: 0,
-      commission: 0
+      price: null,
+      commission: null
     }]);
   };
 
@@ -46,7 +46,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ type, onOrderCreated }) => {
   };
 
   const calculateTotalQuantity = (): number => {
-    return items.reduce((sum, item) => sum + Number(item.quantity), 0);
+    return items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -168,9 +168,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ type, onOrderCreated }) => {
               <input
                 type="number"
                 id={`item-quantity-${index}`}
-                value={item.quantity}
+                value={item.quantity || ''}
                 min="1"
-                onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || null)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
               />
@@ -195,15 +195,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ type, onOrderCreated }) => {
 
             <div className="col-span-2">
               <label htmlFor={`item-price-${index}`} className="block text-sm font-medium text-gray-700">
-                Price
+                Price (₹)
               </label>
               <input
                 type="number"
                 id={`item-price-${index}`}
-                value={item.price}
+                value={item.price || ''}
                 min="0"
                 step="0.01"
-                onChange={(e) => handleItemChange(item.id, 'price', parseFloat(e.target.value) || 0)}
+                onChange={(e) => handleItemChange(item.id, 'price', parseFloat(e.target.value) || null)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
               />
@@ -211,15 +211,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ type, onOrderCreated }) => {
 
             <div className="col-span-2">
               <label htmlFor={`item-commission-${index}`} className="block text-sm font-medium text-gray-700">
-                Commission
+                Commission (₹)
               </label>
               <input
                 type="number"
                 id={`item-commission-${index}`}
-                value={item.commission}
+                value={item.commission || ''}
                 min="0"
                 step="0.01"
-                onChange={(e) => handleItemChange(item.id, 'commission', parseFloat(e.target.value) || 0)}
+                onChange={(e) => handleItemChange(item.id, 'commission', parseFloat(e.target.value) || null)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
               />

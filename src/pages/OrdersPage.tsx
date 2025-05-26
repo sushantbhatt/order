@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllOrders } from '../services/orderService';
 import { Order } from '../types';
-import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
+import { formatDateForDisplay } from '../utils/helpers';
 import { Package, Truck, Search, Filter, X } from 'lucide-react';
 
 const OrdersPage: React.FC = () => {
@@ -65,12 +65,6 @@ const OrdersPage: React.FC = () => {
 
   const handleRowClick = (orderId: string) => {
     navigate(`/orders/${orderId}`);
-  };
-
-  const calculateTotalAmount = (order: Order) => {
-    return order.items.reduce((sum, item) => {
-      return sum + (item.price * item.quantity) + item.commission;
-    }, 0);
   };
 
   return (
@@ -247,10 +241,10 @@ const OrdersPage: React.FC = () => {
                     Remaining
                   </th>
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
+                    Price (₹)
                   </th>
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Commission
+                    Commission (₹)
                   </th>
                   <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -295,10 +289,10 @@ const OrdersPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ${order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
+                      ₹{order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ${order.items.reduce((sum, item) => sum + item.commission, 0).toFixed(2)}
+                      ₹{order.items.reduce((sum, item) => sum + item.commission, 0).toFixed(2)}
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
