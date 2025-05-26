@@ -74,7 +74,7 @@ const OrderDetailPage: React.FC = () => {
           <ul className="list-disc ml-6 text-sm text-gray-700">
             {order.items?.map((item) => (
               <li key={item.id}>
-                {item.name} — {item.quantity} {item.unit} • ₹{item.price?.toFixed(2)} • Commission: ₹{item.commission?.toFixed(2)}
+                {item.name} — {item.quantity} {item.unit} • ₹{Number(item.price).toFixed(2)} • Commission: ₹{Number(item.commission).toFixed(2)}
               </li>
             ))}
           </ul>
