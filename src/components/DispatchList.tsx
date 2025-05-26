@@ -44,13 +44,13 @@ const DispatchList: React.FC<DispatchListProps> = ({ dispatches }) => {
                 {formatDateForDisplay(dispatch.date)}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {dispatch.invoice_Number || '-'}
+                {dispatch.invoiceNumber || '-'}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                 {dispatch.quantity}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                ₹{dispatch.dispatch_Price?.toFixed(2) || '0.00'}
+                ₹{dispatch.dispatchPrice?.toFixed(2) || '0.00'}
               </td>
               <td className="px-3 py-4 text-sm text-gray-500">
                 {dispatch.notes || '-'}
