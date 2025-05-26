@@ -12,8 +12,8 @@ interface DispatchFormProps {
 const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated }) => {
   const [date, setDate] = useState(getTodayDate());
   const [quantity, setQuantity] = useState(Math.min(10, order.remainingQuantity));
-  const [dispatch_Price, setDispatchPrice] = useState(0);
-  const [invoice_Number, setInvoiceNumber] = useState('');
+  const [dispatchPrice, setDispatchPrice] = useState(0);
+  const [invoiceNumber, setInvoiceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +113,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
           <input
             type="number"
             id="dispatch-price"
-            value={dispatch_Price}
+            value={dispatchPrice}
             onChange={(e) => setDispatchPrice(parseFloat(e.target.value) || 0)}
             min="0"
             step="0.01"
@@ -129,7 +129,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
           <input
             type="text"
             id="invoice-number"
-            value={invoice_Number}
+            value={invoiceNumber}
             onChange={(e) => setInvoiceNumber(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
