@@ -30,7 +30,7 @@ const DispatchList: React.FC<DispatchListProps> = ({ dispatches }) => {
               Quantity
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-              Price (₹)
+              Price
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               Notes
@@ -50,7 +50,7 @@ const DispatchList: React.FC<DispatchListProps> = ({ dispatches }) => {
                 {dispatch.quantity}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                ₹{Number(dispatch.dispatchPrice).toFixed(2)}
+                ₹{dispatch.dispatchPrice?.toFixed(2) || '0.00'}
               </td>
               <td className="px-3 py-4 text-sm text-gray-500">
                 {dispatch.notes || '-'}
