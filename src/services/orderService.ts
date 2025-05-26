@@ -276,7 +276,6 @@ export const getDispatchesByOrderId = async (orderId: string): Promise<Dispatch[
     .order('date', { ascending: false });
 
   if (error) throw error;
-  return data || [];
 
   // Map snake_case from DB to camelCase for your UI
   const dispatches = (data || []).map(d => ({
@@ -289,5 +288,7 @@ export const getDispatchesByOrderId = async (orderId: string): Promise<Dispatch[
     notes: d.notes,
     createdAt: d.created_at
   }));
+
+  return dispatches;
   
 };
