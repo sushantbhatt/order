@@ -277,4 +277,17 @@ export const getDispatchesByOrderId = async (orderId: string): Promise<Dispatch[
 
   if (error) throw error;
   return data || [];
+
+  // Map snake_case from DB to camelCase for your UI
+  const dispatches = (data || []).map(d => ({
+    id: d.id,
+    orderId: d.order_id,
+    date: d.date,
+    quantity: d.quantity,
+    dispatchPrice: d.dispatch_price || 0,
+    invoiceNumber: d.invoice_number || '',
+    notes: d.notes,
+    createdAt: d.created_at
+  }));
+  
 };
