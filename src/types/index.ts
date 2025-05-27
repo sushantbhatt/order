@@ -30,7 +30,7 @@ export interface Dispatch {
   id: string;
   orderId: string;
   date: string;
-  quantity: number | null;
+  quantity: number;
   dispatchPrice: number | null;
   invoiceNumber?: string;
   notes?: string;
