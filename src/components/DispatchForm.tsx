@@ -11,8 +11,8 @@ interface DispatchFormProps {
 
 const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated }) => {
   const [date, setDate] = useState(getTodayDate());
-  const [quantity, setQuantity] = useState(Math.min(10, order.remainingQuantity));
-  const [dispatchPrice, setDispatchPrice] = useState(0);
+  const [quantity, setQuantity] = useState<number | null>(null);
+  const [dispatchPrice, setDispatchPrice] = useState<number | null>(null);
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,7 +22,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
     e.preventDefault();
     setError(null);
     
-    if (quantity <= 0) {
+    if (!quantity || quantity <= 0) {
       setError('Quantity must be greater than 0');
       return;
     }
@@ -32,7 +32,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
       return;
     }
 
-    if (dispatchPrice < 0) {
+    if (dispatchPrice && dispatchPrice < 0) {
       setError('Price cannot be negative');
       return;
     }
@@ -43,7 +43,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
       await createDispatch(order.id, {
         date,
         quantity,
-        dispatchPrice,
+        dispatchPrice: dispatchPrice || null,
         invoiceNumber,
         notes
       });
@@ -51,8 +51,8 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
       onDispatchCreated();
       
       setDate(getTodayDate());
-      setQuantity(Math.min(10, order.remainingQuantity));
-      setDispatchPrice(0);
+      setQuantity(null);
+      setDispatchPrice(null);
       setInvoiceNumber('');
       setNotes('');
     } catch (error) {
@@ -97,10 +97,10 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
           <input
             type="number"
             id="dispatch-quantity"
-            value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-            min="1"
-            max={order.remainingQuantity}
+            value={quantity || ''}
+            onChange={(e) => setQuantity(parseFloat(e.target.value) || null)}
+            min="0.01"
+            step="0.01"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
           />
@@ -108,17 +108,16 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
 
         <div>
           <label htmlFor="dispatch-price" className="block text-sm font-medium text-gray-700">
-            Dispatch Price
+            Dispatch Price (₹)
           </label>
           <input
             type="number"
             id="dispatch-price"
-            value={dispatchPrice}
-            onChange={(e) => setDispatchPrice(parseFloat(e.target.value) || 0)}
+            value={dispatchPrice || ''}
             min="0"
             step="0.01"
+            onChange={(e) => setDispatchPrice(parseFloat(e.target.value) || null)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            required
           />
         </div>
 
