@@ -43,7 +43,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
       await createDispatch(order.id, {
         date,
         quantity,
-        dispatchPrice: dispatchPrice || null,
+        dispatchPrice,
         invoiceNumber,
         notes
       });

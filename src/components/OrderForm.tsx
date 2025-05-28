@@ -169,8 +169,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ type, onOrderCreated }) => {
                 type="number"
                 id={`item-quantity-${index}`}
                 value={item.quantity || ''}
-                min="1"
-                onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || null)}
+                min="0.01"
+                step="0.01"
+                onChange={(e) => handleItemChange(item.id, 'quantity', parseFloat(e.target.value) || null)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
               />
