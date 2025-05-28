@@ -66,8 +66,8 @@ const OrderDetailPage: React.FC = () => {
       <div className="bg-white rounded shadow p-4 mb-6">
         <h2 className="text-lg font-semibold mb-2">Order Details</h2>
         <p>Status: <strong className="capitalize">{order.status}</strong></p>
-        <p>Total Quantity: <strong>{order.totalQuantity}</strong></p>
-        <p>Remaining Quantity: <strong>{order.remainingQuantity}</strong></p>
+        <p>Total Quantity: <strong>{order.totalQuantity?.toFixed(2)}</strong></p>
+        <p>Remaining Quantity: <strong>{order.remainingQuantity?.toFixed(2)}</strong></p>
         {order.notes && <p>Notes: {order.notes}</p>}
         <div className="mt-4">
           <h3 className="font-medium mb-1">Items:</h3>
