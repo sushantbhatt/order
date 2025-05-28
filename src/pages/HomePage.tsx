@@ -116,7 +116,7 @@ const HomePage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Sales</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.totalSalesAmount}</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.totalSalesAmount?.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ const HomePage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Purchases</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.totalPurchaseAmount}</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.totalPurchaseAmount?.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -140,7 +140,7 @@ const HomePage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Quantity</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.totalQuantityOrdered}</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.totalQuantityOrdered?.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -152,7 +152,7 @@ const HomePage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Dispatched</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.quantityDispatched}</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.quantityDispatched?.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -164,7 +164,7 @@ const HomePage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Remaining</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.quantityLeft}</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.quantityLeft?.toFixed(2)}</p>
             </div>
           </div>
         </div>
