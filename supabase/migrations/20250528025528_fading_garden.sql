@@ -21,3 +21,7 @@ ALTER TABLE dispatches
   ALTER COLUMN quantity TYPE double precision,
   ALTER COLUMN quantity DROP DEFAULT,
   ALTER COLUMN dispatch_price DROP DEFAULT;
+
+-- Update orders items table
+ALTER TABLE orders_items
+  ALTER COLUMN quantity TYPE double precision;
