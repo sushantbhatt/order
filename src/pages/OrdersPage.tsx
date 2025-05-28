@@ -279,13 +279,13 @@ const OrdersPage: React.FC = () => {
                       {order.type === 'sale' ? order.customer : order.supplier}
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {order.totalQuantity}
+                      {order.totalQuantity?.toFixed(2)}
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`${
                         order.remainingQuantity > 0 ? 'text-amber-600' : 'text-green-600'
                       } font-medium`}>
-                        {order.remainingQuantity}
+                        {order.remainingQuantity?.toFixed(2)}
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
