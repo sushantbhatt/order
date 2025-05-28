@@ -92,7 +92,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
         
         <div>
           <label htmlFor="dispatch-quantity" className="block text-sm font-medium text-gray-700">
-            Quantity (Remaining: {order.remainingQuantity})
+            Quantity (Remaining: {order.remainingQuantity?.toFixed(2)})
           </label>
           <input
             type="number"
