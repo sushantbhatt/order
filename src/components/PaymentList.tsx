@@ -26,9 +26,6 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
               Order ID
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-              Type
-            </th>
-            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               Date
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -43,6 +40,9 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               Payment Date
             </th>
+            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+              Amount
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 bg-white">
@@ -52,30 +52,30 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
                 {payment.orderId}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {payment.type}
+                {payment.order?.date ? formatDateForDisplay(payment.order.date) : '-'}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {formatDateForDisplay(payment.date)}
+                {payment.order?.type === 'sale' ? payment.order.customer : payment.order?.supplier}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {payment.type === 'sale' ? payment.customer : payment.supplier}
-              </td>
-              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {payment.totalQuantity}
+                {payment.order?.total_quantity?.toFixed(2) || '-'}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm">
                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  payment.paymentStatus === 'completed'
+                  payment.order?.payment_status === 'completed'
                     ? 'bg-green-100 text-green-800'
-                    : payment.paymentStatus === 'partial'
+                    : payment.order?.payment_status === 'partial'
                     ? 'bg-amber-100 text-amber-800'
                     : 'bg-red-100 text-red-800'
                 }`}>
-                  {payment.paymentStatus}
+                  {payment.order?.payment_status || 'pending'}
                 </span>
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                 {formatDateForDisplay(payment.paymentDate)}
+              </td>
+              <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
+                {formatCurrency(payment.amount)}
               </td>
             </tr>
           ))}

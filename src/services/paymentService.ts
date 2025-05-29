@@ -60,7 +60,18 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<Pay
 export const getPaymentsByOrderId = async (orderId: string): Promise<Payment[]> => {
   const { data, error } = await supabase
     .from('payments')
-    .select('*')
+    .select(`
+      *,
+      order:orders (
+        id,
+        type,
+        date,
+        customer,
+        supplier,
+        total_quantity,
+        payment_status
+      )
+    `)
     .eq('order_id', orderId)
     .order('payment_date', { ascending: false });
 
@@ -76,6 +87,7 @@ export const getPaymentsByOrderId = async (orderId: string): Promise<Payment[]> 
     paymentMode: payment.payment_mode,
     referenceNumber: payment.reference_number,
     notes: payment.notes,
-    createdAt: payment.created_at
+    createdAt: payment.created_at,
+    order: payment.order
   }));
 };

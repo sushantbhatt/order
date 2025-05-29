@@ -52,4 +52,5 @@ export interface Payment {
   referenceNumber?: string;
   notes?: string;
   createdAt: string;
+  order?: Order;
 }
