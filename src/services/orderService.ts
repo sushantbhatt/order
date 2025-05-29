@@ -45,7 +45,8 @@ export const getOrdersByType = async (type: OrderType): Promise<Order[]> => {
     .select(`
       *,
       items:order_items(*),
-      dispatches:dispatches(*)
+      dispatches:dispatches(*),
+      payments:payments(*)
     `)
     .eq('type', type)
     .order('created_at', { ascending: false });
@@ -58,10 +59,16 @@ export const getOrdersByType = async (type: OrderType): Promise<Order[]> => {
     const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
     const remainingQuantity = totalQuantity - dispatchedQuantity;
 
+    // Get the latest payment status
+    const latestPayment = order.payments?.sort((a, b) => 
+      new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+    )[0];
+
     return {
       ...order,
       totalQuantity,
-      remainingQuantity
+      remainingQuantity,
+      paymentStatus: latestPayment?.payment_status || order.payment_status || 'pending'
     };
   });
 
@@ -75,7 +82,8 @@ export const getOrderById = async (id: string): Promise<Order | null> => {
     .select(`
       *,
       items:order_items(*),
-      dispatches:dispatches(*)
+      dispatches:dispatches(*),
+      payments:payments(*)
     `)
     .eq('id', id)
     .single();
@@ -87,10 +95,16 @@ export const getOrderById = async (id: string): Promise<Order | null> => {
     const dispatchedQuantity = data.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
     const remainingQuantity = totalQuantity - dispatchedQuantity;
 
+    // Get the latest payment status
+    const latestPayment = data.payments?.sort((a, b) => 
+      new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+    )[0];
+
     return {
       ...data,
       totalQuantity,
-      remainingQuantity
+      remainingQuantity,
+      paymentStatus: latestPayment?.payment_status || data.payment_status || 'pending'
     };
   }
 
@@ -122,6 +136,7 @@ export const createOrder = async (orderData: Partial<Order>, type: OrderType): P
       total_quantity: totalQuantity,
       remaining_quantity: totalQuantity,
       status: 'pending',
+      payment_status: 'pending',
       notes: orderData.notes,
       user_id: session.session.user.id
     })
@@ -152,7 +167,8 @@ export const createOrder = async (orderData: Partial<Order>, type: OrderType): P
     ...order,
     totalQuantity,
     remainingQuantity: totalQuantity,
-    items: orderData.items || []
+    items: orderData.items || [],
+    paymentStatus: 'pending'
   };
 };
 
@@ -190,7 +206,8 @@ export const filterOrdersByDateRange = async (startDate: string, endDate: string
     .select(`
       *,
       items:order_items(*),
-      dispatches:dispatches(*)
+      dispatches:dispatches(*),
+      payments:payments(*)
     `)
     .gte('date', startDate)
     .lte('date', endDate)
@@ -204,10 +221,16 @@ export const filterOrdersByDateRange = async (startDate: string, endDate: string
     const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
     const remainingQuantity = totalQuantity - dispatchedQuantity;
 
+    // Get the latest payment status
+    const latestPayment = order.payments?.sort((a, b) => 
+      new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+    )[0];
+
     return {
       ...order,
       totalQuantity,
-      remainingQuantity
+      remainingQuantity,
+      paymentStatus: latestPayment?.payment_status || order.payment_status || 'pending'
     };
   });
 
@@ -221,7 +244,8 @@ export const searchOrders = async (query: string): Promise<Order[]> => {
     .select(`
       *,
       items:order_items(*),
-      dispatches:dispatches(*)
+      dispatches:dispatches(*),
+      payments:payments(*)
     `)
     .or(`customer.ilike.%${query}%,supplier.ilike.%${query}%,id.ilike.%${query}%`)
     .order('created_at', { ascending: false });
@@ -234,10 +258,16 @@ export const searchOrders = async (query: string): Promise<Order[]> => {
     const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
     const remainingQuantity = totalQuantity - dispatchedQuantity;
 
+    // Get the latest payment status
+    const latestPayment = order.payments?.sort((a, b) => 
+      new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+    )[0];
+
     return {
       ...order,
       totalQuantity,
-      remainingQuantity
+      remainingQuantity,
+      paymentStatus: latestPayment?.payment_status || order.payment_status || 'pending'
     };
   });
 
@@ -272,7 +302,7 @@ export const createDispatch = async (orderId: string, dispatchData: Partial<Disp
   // Get the current order with all dispatches
   const { data: currentOrder, error: orderError } = await supabase
     .from('orders')
-    .select('*, items:order_items(*), dispatches:dispatches(*)')
+    .select('*, items:order_items(*), dispatches:dispatches(*), payments:payments(*)')
     .eq('id', orderId)
     .single();
 
@@ -299,13 +329,19 @@ export const createDispatch = async (orderId: string, dispatchData: Partial<Disp
 
   if (updateError) throw updateError;
 
+  // Get the latest payment status
+  const latestPayment = currentOrder.payments?.sort((a, b) => 
+    new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+  )[0];
+
   return {
     dispatch,
     order: {
       ...updatedOrder,
       totalQuantity,
       remainingQuantity,
-      items: currentOrder.items
+      items: currentOrder.items,
+      paymentStatus: latestPayment?.payment_status || updatedOrder.payment_status || 'pending'
     }
   };
 };
