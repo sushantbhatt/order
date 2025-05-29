@@ -8,18 +8,25 @@ export const getAllOrders = async (): Promise<Order[]> => {
     .from('orders')
     .select(`
       *,
-      items:order_items(*)
+      items:order_items(*),
+      dispatches:dispatches(*)
     `)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
   
   // Calculate total quantity from items if not set
-  const ordersWithQuantities = (data || []).map(order => ({
-    ...order,
-    totalQuantity: order.total_quantity || order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0,
-    remainingQuantity: order.remaining_quantity || order.total_quantity || 0
-  }));
+  const ordersWithQuantities = (data || []).map(order => {
+    const totalQuantity = order.total_quantity || order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+    const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
+    const remainingQuantity = totalQuantity - dispatchedQuantity;
+
+    return {
+      ...order,
+      totalQuantity,
+      remainingQuantity
+    };
+  });
 
   return ordersWithQuantities;
 };
@@ -30,7 +37,8 @@ export const getOrdersByType = async (type: OrderType): Promise<Order[]> => {
     .from('orders')
     .select(`
       *,
-      items:order_items(*)
+      items:order_items(*),
+      dispatches:dispatches(*)
     `)
     .eq('type', type)
     .order('created_at', { ascending: false });
@@ -38,11 +46,17 @@ export const getOrdersByType = async (type: OrderType): Promise<Order[]> => {
   if (error) throw error;
   
   // Calculate total quantity from items if not set
-  const ordersWithQuantities = (data || []).map(order => ({
-    ...order,
-    totalQuantity: order.total_quantity || order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0,
-    remainingQuantity: order.remaining_quantity || order.total_quantity || 0
-  }));
+  const ordersWithQuantities = (data || []).map(order => {
+    const totalQuantity = order.total_quantity || order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+    const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
+    const remainingQuantity = totalQuantity - dispatchedQuantity;
+
+    return {
+      ...order,
+      totalQuantity,
+      remainingQuantity
+    };
+  });
 
   return ordersWithQuantities;
 };
@@ -53,7 +67,8 @@ export const getOrderById = async (id: string): Promise<Order | null> => {
     .from('orders')
     .select(`
       *,
-      items:order_items(*)
+      items:order_items(*),
+      dispatches:dispatches(*)
     `)
     .eq('id', id)
     .single();
@@ -61,11 +76,14 @@ export const getOrderById = async (id: string): Promise<Order | null> => {
   if (error) throw error;
   
   if (data) {
-    // Calculate total quantity from items if not set
+    const totalQuantity = data.total_quantity || data.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+    const dispatchedQuantity = data.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
+    const remainingQuantity = totalQuantity - dispatchedQuantity;
+
     return {
       ...data,
-      totalQuantity: data.total_quantity || data.items?.reduce((sum, item) => sum + item.quantity, 0) || 0,
-      remainingQuantity: data.remaining_quantity || data.total_quantity || 0
+      totalQuantity,
+      remainingQuantity
     };
   }
 
@@ -164,7 +182,8 @@ export const filterOrdersByDateRange = async (startDate: string, endDate: string
     .from('orders')
     .select(`
       *,
-      items:order_items(*)
+      items:order_items(*),
+      dispatches:dispatches(*)
     `)
     .gte('date', startDate)
     .lte('date', endDate)
@@ -173,11 +192,17 @@ export const filterOrdersByDateRange = async (startDate: string, endDate: string
   if (error) throw error;
   
   // Calculate total quantity from items if not set
-  const ordersWithQuantities = (data || []).map(order => ({
-    ...order,
-    totalQuantity: order.total_quantity || order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0,
-    remainingQuantity: order.remaining_quantity || order.total_quantity || 0
-  }));
+  const ordersWithQuantities = (data || []).map(order => {
+    const totalQuantity = order.total_quantity || order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+    const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
+    const remainingQuantity = totalQuantity - dispatchedQuantity;
+
+    return {
+      ...order,
+      totalQuantity,
+      remainingQuantity
+    };
+  });
 
   return ordersWithQuantities;
 };
@@ -188,7 +213,8 @@ export const searchOrders = async (query: string): Promise<Order[]> => {
     .from('orders')
     .select(`
       *,
-      items:order_items(*)
+      items:order_items(*),
+      dispatches:dispatches(*)
     `)
     .or(`customer.ilike.%${query}%,supplier.ilike.%${query}%,id.ilike.%${query}%`)
     .order('created_at', { ascending: false });
@@ -196,11 +222,17 @@ export const searchOrders = async (query: string): Promise<Order[]> => {
   if (error) throw error;
   
   // Calculate total quantity from items if not set
-  const ordersWithQuantities = (data || []).map(order => ({
-    ...order,
-    totalQuantity: order.total_quantity || order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0,
-    remainingQuantity: order.remaining_quantity || order.total_quantity || 0
-  }));
+  const ordersWithQuantities = (data || []).map(order => {
+    const totalQuantity = order.total_quantity || order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+    const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
+    const remainingQuantity = totalQuantity - dispatchedQuantity;
+
+    return {
+      ...order,
+      totalQuantity,
+      remainingQuantity
+    };
+  });
 
   return ordersWithQuantities;
 };
@@ -230,23 +262,27 @@ export const createDispatch = async (orderId: string, dispatchData: Partial<Disp
 
   if (dispatchError) throw dispatchError;
 
-  // Get the current order
+  // Get the current order with all dispatches
   const { data: currentOrder, error: orderError } = await supabase
     .from('orders')
-    .select('*, items:order_items(*)')
+    .select('*, items:order_items(*), dispatches:dispatches(*)')
     .eq('id', orderId)
     .single();
 
   if (orderError) throw orderError;
 
-  // Update the order's remaining quantity and status
-  const newRemainingQuantity = Math.max(0, currentOrder.remaining_quantity - (dispatchData.quantity || 0));
-  const newStatus = newRemainingQuantity === 0 ? 'completed' : 'partial';
+  // Calculate total dispatched quantity including the new dispatch
+  const totalQuantity = currentOrder.total_quantity;
+  const dispatchedQuantity = currentOrder.dispatches.reduce((sum, d) => sum + (d.quantity || 0), 0) + (dispatchData.quantity || 0);
+  const remainingQuantity = totalQuantity - dispatchedQuantity;
+
+  // Update order status based on dispatched quantity
+  const newStatus = dispatchedQuantity >= totalQuantity ? 'completed' : 'partial';
 
   const { data: updatedOrder, error: updateError } = await supabase
     .from('orders')
     .update({
-      remaining_quantity: newRemainingQuantity,
+      remaining_quantity: remainingQuantity,
       status: newStatus,
       updated_at: new Date().toISOString()
     })
@@ -260,8 +296,8 @@ export const createDispatch = async (orderId: string, dispatchData: Partial<Disp
     dispatch,
     order: {
       ...updatedOrder,
-      totalQuantity: currentOrder.total_quantity,
-      remainingQuantity: newRemainingQuantity,
+      totalQuantity,
+      remainingQuantity,
       items: currentOrder.items
     }
   };
@@ -290,5 +326,4 @@ export const getDispatchesByOrderId = async (orderId: string): Promise<Dispatch[
   }));
 
   return dispatches;
-  
 };
