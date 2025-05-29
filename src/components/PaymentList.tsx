@@ -42,6 +42,8 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
     );
   }
 
+  const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+
   return (
     <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
       <table className="min-w-full divide-y divide-gray-300">
@@ -97,7 +99,7 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
               Total
             </th>
             <td className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-              {formatCurrency(payments.reduce((sum, payment) => sum + payment.amount, 0))}
+              {formatCurrency(totalAmount)}
             </td>
             <td colSpan={3}></td>
           </tr>
