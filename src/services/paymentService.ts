@@ -18,11 +18,14 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<Pay
     throw new Error('User must be logged in to create a payment');
   }
 
+  // Destructure payment_status from paymentData to separate order update data from payment data
+  const { payment_status, ...paymentInsertData } = paymentData;
+
   // Start a transaction
   const { data: payment, error: paymentError } = await supabase
     .from('payments')
     .insert({
-      ...paymentData,
+      ...paymentInsertData,
       user_id: session.session.user.id
     })
     .select()
@@ -35,7 +38,7 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<Pay
   // Update order payment status
   const { error: orderError } = await supabase
     .from('orders')
-    .update({ payment_status: paymentData.payment_status })
+    .update({ payment_status })
     .eq('id', paymentData.order_id);
 
   if (orderError) {
