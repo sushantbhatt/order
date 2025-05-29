@@ -4,7 +4,7 @@ import { getOrderById, getDispatchesByOrderId } from '../services/orderService';
 import { Order, Dispatch } from '../types';
 import DispatchForm from '../components/DispatchForm';
 import DispatchList from '../components/DispatchList';
-import { formatDateForDisplay } from '../utils/helpers';
+import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
 
 const OrderDetailPage: React.FC = () => {
   const { id } = useParams();
@@ -56,43 +56,83 @@ const OrderDetailPage: React.FC = () => {
     );
   }
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-2">Order {order.id}</h1>
-      <p className="text-sm text-gray-500 mb-4">
-        {order.type === 'sale' ? 'Sales' : 'Purchase'} order • {formatDateForDisplay(order.date)}
-      </p>
+  // Calculate total amount
+  const totalAmount = order.items.reduce((sum, item) => 
+    sum + ((item.quantity + item.commission) * item.price), 0);
 
-      <div className="bg-white rounded shadow p-4 mb-6">
-        <h2 className="text-lg font-semibold mb-2">Order Details</h2>
-        <p>Status: <strong className="capitalize">{order.status}</strong></p>
-        <p>Total Quantity: <strong>{order.totalQuantity?.toFixed(2)}</strong></p>
-        <p>Remaining Quantity: <strong>{order.remainingQuantity?.toFixed(2)}</strong></p>
-        {order.notes && <p>Notes: {order.notes}</p>}
-        <div className="mt-4">
-          <h3 className="font-medium mb-1">Items:</h3>
-          <ul className="list-disc ml-6 text-sm text-gray-700">
-            {order.items?.map((item) => (
-              <li key={item.id}>
-                {item.name} — {item.quantity} {item.unit} • ₹{item.price?.toFixed(2)} • Commission: ₹{item.commission?.toFixed(2)}
-              </li>
-            ))}
-          </ul>
-        </div>
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">Order {order.id}</h1>
+        <p className="text-sm text-gray-500">
+          {order.type === 'sale' ? 'Sales' : 'Purchase'} order • {formatDateForDisplay(order.date)}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-lg font-semibold mb-2">Dispatches</h2>
-          <DispatchList dispatches={dispatches} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Order Details</h2>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Status</span>
+                <span className="font-medium capitalize">{order.status}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Quantity</span>
+                <span className="font-medium">{order.totalQuantity.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Remaining Quantity</span>
+                <span className={`font-medium ${
+                  order.remainingQuantity > 0 ? 'text-amber-600' : 'text-green-600'
+                }`}>
+                  {order.remainingQuantity.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Amount</span>
+                <span className="font-medium">{formatCurrency(totalAmount)}</span>
+              </div>
+              {order.notes && (
+                <div className="pt-3 border-t">
+                  <p className="text-gray-600">Notes:</p>
+                  <p className="mt-1">{order.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Items</h2>
+            <div className="divide-y">
+              {order.items?.map((item) => (
+                <div key={item.id} className="py-3">
+                  <div className="flex justify-between mb-1">
+                    <span className="font-medium">{item.name}</span>
+                    <span>{formatCurrency(item.price * item.quantity)}</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {item.quantity} {item.unit} • ₹{item.price}/unit
+                    {item.commission > 0 && ` • Commission: ₹${item.commission}`}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {order.remainingQuantity > 0 && (
-          <div className="bg-white p-4 rounded shadow">
-            <h2 className="text-lg font-semibold mb-2">New Dispatch</h2>
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Record Dispatch</h2>
             <DispatchForm order={order} onDispatchCreated={handleDispatchCreated} />
           </div>
-        )}
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Dispatch History</h2>
+            <DispatchList dispatches={dispatches} />
+          </div>
+        </div>
       </div>
     </div>
   );
