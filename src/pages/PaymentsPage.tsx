@@ -13,7 +13,6 @@ const PaymentsPage: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [order, setOrder] = useState<Order | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,7 +48,6 @@ const PaymentsPage: React.FC = () => {
           throw new Error('Order not found');
         }
 
-        setOrder(orderData);
         setSelectedOrder(orderData);
         setPayments(paymentsData);
       } catch (err) {
@@ -65,26 +63,33 @@ const PaymentsPage: React.FC = () => {
 
   const handlePaymentSuccess = async () => {
     if (selectedOrder) {
-      const updatedPayments = await getPaymentsByOrderId(selectedOrder.id);
-      const updatedOrder = await getOrderById(selectedOrder.id);
-      const updatedOrders = await getAllOrders();
+      const [updatedPayments, updatedOrder, updatedOrders] = await Promise.all([
+        getPaymentsByOrderId(selectedOrder.id),
+        getOrderById(selectedOrder.id),
+        getAllOrders()
+      ]);
+      
       setPayments(updatedPayments);
-      setOrder(updatedOrder);
-      setOrders(updatedOrders);
       setSelectedOrder(updatedOrder);
+      setOrders(updatedOrders);
     }
   };
 
   const handleOrderSelect = async (orderId: string) => {
     try {
-      const selectedOrder = await getOrderById(orderId);
+      const [selectedOrder, orderPayments] = await Promise.all([
+        getOrderById(orderId),
+        getPaymentsByOrderId(orderId)
+      ]);
+
       if (selectedOrder) {
-        const orderPayments = await getPaymentsByOrderId(orderId);
         setSelectedOrder(selectedOrder);
         setPayments(orderPayments);
+        navigate(`/payments/${orderId}`);
       }
     } catch (err) {
       console.error('Error selecting order:', err);
+      setError('Failed to load order details');
     }
   };
 
