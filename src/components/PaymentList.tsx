@@ -1,37 +1,10 @@
 import React from 'react';
-import { Payment, PaymentMode } from '../types';
+import { Payment } from '../types';
 import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
-import { BanknoteIcon, CalendarIcon, CreditCard, FileText, CheckCircle } from 'lucide-react';
 
 interface PaymentListProps {
   payments: Payment[];
 }
-
-const getPaymentModeIcon = (mode: PaymentMode) => {
-  switch (mode) {
-    case 'cash':
-      return <BanknoteIcon className="w-4 h-4 text-green-600" />;
-    case 'bank_transfer':
-      return <CreditCard className="w-4 h-4 text-blue-600" />;
-    case 'cheque':
-      return <FileText className="w-4 h-4 text-purple-600" />;
-    case 'upi':
-      return <CheckCircle className="w-4 h-4 text-amber-600" />;
-  }
-};
-
-const getPaymentModeLabel = (mode: PaymentMode): string => {
-  switch (mode) {
-    case 'cash':
-      return 'Cash';
-    case 'bank_transfer':
-      return 'Bank Transfer';
-    case 'cheque':
-      return 'Cheque';
-    case 'upi':
-      return 'UPI';
-  }
-};
 
 const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
   if (!payments || payments.length === 0) {
@@ -50,19 +23,25 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
         <thead className="bg-gray-50">
           <tr>
             <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+              Order ID
+            </th>
+            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+              Type
+            </th>
+            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               Date
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-              Amount
+              Customer/Supplier
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-              Mode
+              Total Qty
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-              Reference
+              Payment Status
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-              Notes
+              Payment Date
             </th>
           </tr>
         </thead>
@@ -70,38 +49,45 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
           {payments.map((payment) => (
             <tr key={payment.id}>
               <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                <div className="flex items-center gap-1.5">
-                  <CalendarIcon className="w-4 h-4 text-gray-400" />
-                  {formatDateForDisplay(payment.paymentDate)}
-                </div>
-              </td>
-              <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
-                {formatCurrency(payment.amount)}
+                {payment.orderId}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                <div className="flex items-center gap-1.5">
-                  {getPaymentModeIcon(payment.paymentMode)}
-                  <span>{getPaymentModeLabel(payment.paymentMode)}</span>
-                </div>
+                {payment.type}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {payment.referenceNumber || '-'}
+                {formatDateForDisplay(payment.date)}
               </td>
-              <td className="px-3 py-4 text-sm text-gray-500">
-                {payment.notes || '-'}
+              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                {payment.type === 'sale' ? payment.customer : payment.supplier}
+              </td>
+              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                {payment.totalQuantity}
+              </td>
+              <td className="whitespace-nowrap px-3 py-4 text-sm">
+                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                  payment.paymentStatus === 'completed'
+                    ? 'bg-green-100 text-green-800'
+                    : payment.paymentStatus === 'partial'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {payment.paymentStatus}
+                </span>
+              </td>
+              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                {formatDateForDisplay(payment.paymentDate)}
               </td>
             </tr>
           ))}
         </tbody>
         <tfoot className="bg-gray-50">
           <tr>
-            <th scope="row" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-              Total
+            <th scope="row" colSpan={6} className="py-3.5 pl-4 pr-3 text-right text-sm font-semibold text-gray-900 sm:pl-6">
+              Total Amount
             </th>
             <td className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               {formatCurrency(totalAmount)}
             </td>
-            <td colSpan={3}></td>
           </tr>
         </tfoot>
       </table>
