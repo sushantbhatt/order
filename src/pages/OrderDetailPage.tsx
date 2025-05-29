@@ -56,9 +56,13 @@ const OrderDetailPage: React.FC = () => {
     );
   }
 
-  // Calculate total amount
-  const totalAmount = order.items.reduce((sum, item) => 
-    sum + ((item.quantity + item.commission) * item.price), 0);
+  // Calculate total dispatch amount
+  const totalDispatchAmount = dispatches.reduce((sum, dispatch) => 
+    sum + ((dispatch.dispatchPrice || 0) * dispatch.quantity), 0);
+
+  // Calculate total order amount including commission
+  const totalOrderAmount = order.items.reduce((sum, item) => 
+    sum + ((item.price + item.commission) * item.quantity), 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -92,7 +96,11 @@ const OrderDetailPage: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Amount</span>
-                <span className="font-medium">{formatCurrency(totalAmount)}</span>
+                <span className="font-medium">{formatCurrency(totalOrderAmount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Dispatch Amount</span>
+                <span className="font-medium">{formatCurrency(totalDispatchAmount)}</span>
               </div>
               {order.notes && (
                 <div className="pt-3 border-t">
@@ -106,18 +114,20 @@ const OrderDetailPage: React.FC = () => {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Items</h2>
             <div className="divide-y">
-              {order.items?.map((item) => (
-                <div key={item.id} className="py-3">
-                  <div className="flex justify-between mb-1">
-                    <span className="font-medium">{item.name}</span>
-                    <span>{formatCurrency(item.price * item.quantity)}</span>
+              {order.items?.map((item) => {
+                const itemTotal = (item.price + item.commission) * item.quantity;
+                return (
+                  <div key={item.id} className="py-3">
+                    <div className="flex justify-between mb-1">
+                      <span className="font-medium">{item.name}</span>
+                      <span>{formatCurrency(itemTotal)}</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {item.quantity} {item.unit} • ₹{item.price}/unit + ₹{item.commission} commission
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600">
-                    {item.quantity} {item.unit} • ₹{item.price}/unit
-                    {item.commission > 0 && ` • Commission: ₹${item.commission}`}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
