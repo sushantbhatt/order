@@ -26,11 +26,6 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
       setError('Quantity must be greater than 0');
       return;
     }
-    
-   if (quantity> order.remainingQuantity) {
-     setError(`Quantity cannot exceed remaining quantity (${order.remainingQuantity})`);
-      return;
-    }
 
     if (dispatchPrice && dispatchPrice < 0) {
       setError('Price cannot be negative');
@@ -151,9 +146,9 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
       <div className="flex justify-end">
         <button
           type="submit"
-          disabled={isSubmitting || order.remainingQuantity === 0}
+          disabled={isSubmitting}
           className={`inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
-            isSubmitting || order.remainingQuantity === 0
+            isSubmitting
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
           }`}
