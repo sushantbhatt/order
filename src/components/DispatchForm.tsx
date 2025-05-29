@@ -27,10 +27,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
       return;
     }
     
-    if (quantity> order.remainingQuantity) {
-      setError(`Quantity cannot exceed remaining quantity (${order.remainingQuantity})`);
-      return;
-    }
+/?
 
     if (dispatchPrice && dispatchPrice < 0) {
       setError('Price cannot be negative');
