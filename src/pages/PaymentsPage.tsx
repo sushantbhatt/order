@@ -96,13 +96,12 @@ const PaymentsPage: React.FC = () => {
   };
 
   const calculateDispatchAmount = (order: Order) => {
-    // Calculate average commission per unit from all items
-    const totalCommission = order.items.reduce((sum, item) => sum + item.commission, 0);
-    const avgCommissionPerUnit = totalCommission / order.items.length;
-
     return order.dispatches?.reduce((sum, dispatch) => {
-      // For each dispatch, add dispatch price plus commission multiplied by quantity
-      return sum + ((dispatch.dispatchPrice || 0) + avgCommissionPerUnit) * dispatch.quantity;
+      // Get the commission for this dispatch from order items
+      const totalCommission = order.items.reduce((sum, item) => sum + item.commission, 0);
+      
+      // Add dispatch price and commission, then multiply by quantity
+      return sum + ((dispatch.dispatchPrice || 0) + totalCommission) * dispatch.quantity;
     }, 0) || 0;
   };
 
@@ -406,3 +405,5 @@ const PaymentsPage: React.FC = () => {
 };
 
 export default PaymentsPage;
+
+export default PaymentsPage
