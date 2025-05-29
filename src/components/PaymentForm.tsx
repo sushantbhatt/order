@@ -59,51 +59,56 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
           {error}
         </div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          <div className="flex items-center gap-2">
-            <BanknoteIcon className="w-4 h-4" />
-            Amount
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="flex items-center gap-2">
+              <BanknoteIcon className="w-4 h-4" />
+              Amount
+            </div>
+          </label>
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₹</span>
+            <input
+              type="number"
+              name="amount"
+              step="0.01"
+              required
+              value={formData.amount}
+              onChange={handleChange}
+              className="pl-7 w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              placeholder="0.00"
+            />
           </div>
-        </label>
-        <input
-          type="number"
-          name="amount"
-          step="0.01"
-          required
-          value={formData.amount}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter amount"
-        />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Payment Date
+            </div>
+          </label>
+          <input
+            type="date"
+            name="payment_date"
+            required
+            value={formData.payment_date}
+            onChange={handleChange}
+            className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Payment Date
-          </div>
-        </label>
-        <input
-          type="date"
-          name="payment_date"
-          required
-          value={formData.payment_date}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
           <div className="flex items-center gap-2">
             <CreditCard className="w-4 h-4" />
             Payment Mode
@@ -114,7 +119,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
           required
           value={formData.payment_mode}
           onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="cash">Cash</option>
           <option value="bank_transfer">Bank Transfer</option>
@@ -124,7 +129,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Reference Number
@@ -135,13 +140,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
           name="reference_number"
           value={formData.reference_number}
           onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
           placeholder="Enter reference number (optional)"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Notes
@@ -151,20 +156,30 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
           name="notes"
           value={formData.notes}
           onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
           placeholder="Add any notes (optional)"
-          rows={3}
+          rows={2}
         />
       </div>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
-          ${isSubmitting ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} 
-          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+        className={`w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+          isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+        }`}
       >
-        {isSubmitting ? 'Adding Payment...' : 'Add Payment'}
+        {isSubmitting ? (
+          <>
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing...
+          </>
+        ) : (
+          'Record Payment'
+        )}
       </button>
     </form>
   );
