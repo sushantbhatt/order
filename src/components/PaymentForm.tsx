@@ -9,6 +9,7 @@ interface PaymentFormProps {
 
 const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     amount: '',
     payment_date: new Date().toISOString().split('T')[0],
@@ -28,6 +29,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
 
     try {
       await createPayment({
@@ -48,8 +50,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
         reference_number: '',
         notes: ''
       });
-    } catch (error) {
-      console.error('Error creating payment:', error);
+    } catch (err) {
+      console.error('Error creating payment:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create payment');
     } finally {
       setIsSubmitting(false);
     }
@@ -57,6 +60,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+          {error}
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           <div className="flex items-center gap-2">

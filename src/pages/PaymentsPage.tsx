@@ -48,11 +48,17 @@ const PaymentsPage: React.FC = () => {
   }, [id]);
 
   const handlePaymentSuccess = async () => {
-    if (id) {
-      const updatedPayments = await getPaymentsByOrderId(id);
-      const updatedOrder = await getOrderById(id);
+    if (!id) return;
+    
+    try {
+      const [updatedPayments, updatedOrder] = await Promise.all([
+        getPaymentsByOrderId(id),
+        getOrderById(id)
+      ]);
       setPayments(updatedPayments);
       setOrder(updatedOrder);
+    } catch (err) {
+      console.error('Error updating data:', err);
     }
   };
 
