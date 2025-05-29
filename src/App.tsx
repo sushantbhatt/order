@@ -6,7 +6,7 @@ import SalesPage from './pages/SalesPage';
 import PurchasesPage from './pages/PurchasesPage';
 import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
-import PaymentsPage from './pages/PaymentsPage.tsx';
+import PaymentsPage from './pages/PaymentsPage';
 
 function App() {
   return (
@@ -20,8 +20,8 @@ function App() {
             <Route path="/purchases" element={<PurchasesPage />} />
             <Route path="/orders/:id" element={<OrderDetailPage />} />
             <Route path="/orders" element={<OrdersPage />} />
-            <Route path="/payments" element={<PaymentsPage />} />
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="/payments/:id" element={<PaymentsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>
