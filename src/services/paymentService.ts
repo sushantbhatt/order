@@ -26,6 +26,7 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<Pay
       amount: paymentData.amount,
       payment_date: paymentData.payment_date,
       payment_mode: paymentData.payment_mode,
+      payment_status: paymentData.payment_status,
       reference_number: paymentData.reference_number,
       notes: paymentData.notes,
       user_id: session.session.user.id
@@ -63,6 +64,7 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<Pay
     amount: payment.amount,
     paymentDate: payment.payment_date,
     paymentMode: payment.payment_mode,
+    paymentStatus: payment.payment_status,
     referenceNumber: payment.reference_number,
     notes: payment.notes,
     createdAt: payment.created_at,
@@ -98,6 +100,7 @@ export const getPaymentsByOrderId = async (orderId: string): Promise<Payment[]> 
     amount: payment.amount,
     paymentDate: payment.payment_date,
     paymentMode: payment.payment_mode,
+    paymentStatus: payment.payment_status,
     referenceNumber: payment.reference_number,
     notes: payment.notes,
     createdAt: payment.created_at,

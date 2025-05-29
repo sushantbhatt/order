@@ -49,6 +49,7 @@ export interface Payment {
   amount: number;
   paymentDate: string;
   paymentMode: PaymentMode;
+  paymentStatus: PaymentStatus;
   referenceNumber?: string;
   notes?: string;
   createdAt: string;
