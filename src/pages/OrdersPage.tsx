@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllOrders } from '../services/orderService';
 import { Order } from '../types';
 import { formatDateForDisplay } from '../utils/helpers';
-import { Package, Truck, Search, Filter, X } from 'lucide-react';
+import { Package, Truck, Search, Filter, X, ChevronDown } from 'lucide-react';
 
 const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +18,19 @@ const OrdersPage: React.FC = () => {
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [customerFilter, setCustomerFilter] = useState('');
   const [supplierFilter, setSupplierFilter] = useState('');
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleStatusFilterChange = (status: string) => {
     setStatusFilters(prev => 
@@ -75,6 +88,12 @@ const OrdersPage: React.FC = () => {
     navigate(`/orders/${orderId}`);
   };
 
+  const getStatusLabel = () => {
+    if (statusFilters.length === 0) return 'All Statuses';
+    if (statusFilters.length === 1) return statusFilters[0].charAt(0).toUpperCase() + statusFilters[0].slice(1);
+    return `${statusFilters.length} statuses selected`;
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
       <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Manage Orders</h1>
@@ -129,21 +148,42 @@ const OrdersPage: React.FC = () => {
               </select>
             </div>
             
-            <div>
+            <div className="relative" ref={statusDropdownRef}>
               <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <div className="space-y-2">
-                {['pending', 'partial', 'completed', 'cancelled'].map((status) => (
-                  <label key={status} className="inline-flex items-center mr-4">
-                    <input
-                      type="checkbox"
-                      checked={statusFilters.includes(status)}
-                      onChange={() => handleStatusFilterChange(status)}
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 capitalize">{status}</span>
-                  </label>
-                ))}
-              </div>
+              <button
+                type="button"
+                className="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+              >
+                <span className="block truncate">{getStatusLabel()}</span>
+                <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                </span>
+              </button>
+
+              {isStatusDropdownOpen && (
+                <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                  {['pending', 'partial', 'completed', 'cancelled'].map((status) => (
+                    <div
+                      key={status}
+                      className="relative py-2 pl-3 pr-9 cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleStatusFilterChange(status)}
+                    >
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={statusFilters.includes(status)}
+                          onChange={() => {}}
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <span className="ml-3 block font-normal capitalize">
+                          {status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             
             <div>
