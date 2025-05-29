@@ -13,9 +13,17 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [typeFilter, setTypeFilter] = useState<OrderType | 'all'>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState(getTodayDate());
+
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilters(prev => 
+      prev.includes(status)
+        ? prev.filter(s => s !== status)
+        : [...prev, status]
+    );
+  };
 
   // Apply filters
   const filteredOrders = orders.filter(order => {
@@ -32,7 +40,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
     if (typeFilter !== 'all' && order.type !== typeFilter) return false;
     
     // Filter by status
-    if (statusFilter !== 'all' && order.status !== statusFilter) return false;
+    if (statusFilters.length > 0 && !statusFilters.includes(order.status)) return false;
     
     // Filter by date range
     if (startDate && order.date < startDate) return false;
@@ -43,7 +51,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
   
   const clearFilters = () => {
     setTypeFilter('all');
-    setStatusFilter('all');
+    setStatusFilters([]);
     setStartDate('');
     setEndDate(getTodayDate());
   };
@@ -104,21 +112,22 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
             </div>
             
             <div>
-              <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Status
               </label>
-              <select
-                id="status-filter"
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="partial">Partial</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
+              <div className="space-y-2">
+                {['pending', 'partial', 'completed', 'cancelled'].map((status) => (
+                  <label key={status} className="inline-flex items-center mr-4">
+                    <input
+                      type="checkbox"
+                      checked={statusFilters.includes(status)}
+                      onChange={() => handleStatusFilterChange(status)}
+                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                    />
+                    <span className="ml-2 text-sm text-gray-700 capitalize">{status}</span>
+                  </label>
+                ))}
+              </div>
             </div>
             
             <div>
