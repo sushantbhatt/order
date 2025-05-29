@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import PaymentList from '../components/PaymentList';
 import PaymentForm from '../components/PaymentForm';
 import { Payment, Order } from '../types';
 import { getPaymentsByOrderId } from '../services/paymentService';
 import { getAllOrders } from '../services/orderService';
 import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
-import { Search, Filter, X, CreditCard } from 'lucide-react';
+import { Search, Filter, X, CreditCard, Package, Truck } from 'lucide-react';
 
 const PaymentsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -61,6 +61,16 @@ const PaymentsPage: React.FC = () => {
       const updatedOrders = await getAllOrders();
       setOrders(updatedOrders);
     }
+  };
+
+  // Calculate dispatch amount for an order
+  const calculateDispatchAmount = (order: Order) => {
+    return order.dispatches?.reduce((total, dispatch) => {
+      // Get total commission from order items
+      const totalCommission = order.items.reduce((sum, item) => sum + item.commission, 0);
+      // Add dispatch price and commission, then multiply by dispatch quantity
+      return total + ((dispatch.dispatchPrice + totalCommission) * dispatch.quantity);
+    }, 0) || 0;
   };
 
   const filteredOrders = orders.filter(order => {
@@ -226,7 +236,10 @@ const PaymentsPage: React.FC = () => {
                       Customer/Supplier
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
+                      Order Amount
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Dispatch Amount
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
@@ -235,8 +248,9 @@ const PaymentsPage: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredOrders.map((order) => {
-                    const totalAmount = order.items.reduce((sum, item) => 
+                    const orderAmount = order.items.reduce((sum, item) => 
                       sum + ((item.price + item.commission) * item.quantity), 0);
+                    const dispatchAmount = calculateDispatchAmount(order);
                     
                     return (
                       <tr
@@ -247,7 +261,14 @@ const PaymentsPage: React.FC = () => {
                         }`}
                       >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {order.id}
+                          <div className="flex items-center">
+                            {order.type === 'sale' ? (
+                              <Truck className="h-4 w-4 text-blue-600 mr-2" />
+                            ) : (
+                              <Package className="h-4 w-4 text-emerald-600 mr-2" />
+                            )}
+                            {order.id}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {formatDateForDisplay(order.date)}
@@ -256,7 +277,10 @@ const PaymentsPage: React.FC = () => {
                           {order.type === 'sale' ? order.customer : order.supplier}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatCurrency(totalAmount)}
+                          {formatCurrency(orderAmount)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatCurrency(dispatchAmount)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
