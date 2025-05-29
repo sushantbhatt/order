@@ -9,7 +9,8 @@ export const getAllOrders = async (): Promise<Order[]> => {
     .select(`
       *,
       items:order_items(*),
-      dispatches:dispatches(*)
+      dispatches:dispatches(*),
+      payments:payments(*)
     `)
     .order('created_at', { ascending: false });
 
@@ -21,10 +22,16 @@ export const getAllOrders = async (): Promise<Order[]> => {
     const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
     const remainingQuantity = totalQuantity - dispatchedQuantity;
 
+    // Get the latest payment status
+    const latestPayment = order.payments?.sort((a, b) => 
+      new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+    )[0];
+
     return {
       ...order,
       totalQuantity,
-      remainingQuantity
+      remainingQuantity,
+      paymentStatus: latestPayment?.payment_status || order.payment_status || 'pending'
     };
   });
 
