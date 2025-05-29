@@ -15,6 +15,7 @@ const PaymentsPage: React.FC = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [order, setOrder] = useState<Order | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +50,7 @@ const PaymentsPage: React.FC = () => {
         }
 
         setOrder(orderData);
+        setSelectedOrder(orderData);
         setPayments(paymentsData);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -62,16 +64,27 @@ const PaymentsPage: React.FC = () => {
   }, [id]);
 
   const handlePaymentSuccess = async () => {
-    if (id) {
-      const updatedPayments = await getPaymentsByOrderId(id);
-      const updatedOrder = await getOrderById(id);
+    if (selectedOrder) {
+      const updatedPayments = await getPaymentsByOrderId(selectedOrder.id);
+      const updatedOrder = await getOrderById(selectedOrder.id);
+      const updatedOrders = await getAllOrders();
       setPayments(updatedPayments);
       setOrder(updatedOrder);
+      setOrders(updatedOrders);
     }
   };
 
-  const handleOrderSelect = (orderId: string) => {
-    navigate(`/payments/${orderId}`);
+  const handleOrderSelect = async (orderId: string) => {
+    try {
+      const selectedOrder = await getOrderById(orderId);
+      if (selectedOrder) {
+        const orderPayments = await getPaymentsByOrderId(orderId);
+        setSelectedOrder(selectedOrder);
+        setPayments(orderPayments);
+      }
+    } catch (err) {
+      console.error('Error selecting order:', err);
+    }
   };
 
   if (isLoading) {
@@ -82,7 +95,7 @@ const PaymentsPage: React.FC = () => {
     );
   }
 
-  if (!id) {
+  if (!selectedOrder) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">Manage Payments</h1>
@@ -91,30 +104,8 @@ const PaymentsPage: React.FC = () => {
     );
   }
 
-  if (error || !order) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-red-50 border-l-4 border-red-400 p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm text-red-700">
-                {error || 'Order not found'}
-              </p>
-              <button
-                onClick={() => navigate('/payments')}
-                className="mt-2 text-sm text-red-700 underline"
-              >
-                Return to Payments
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Calculate total order amount
-  const totalOrderAmount = order.items.reduce((sum, item) => 
+  const totalOrderAmount = selectedOrder.items.reduce((sum, item) => 
     sum + ((item.price + item.commission) * item.quantity), 0);
 
   // Calculate total paid amount
@@ -127,32 +118,36 @@ const PaymentsPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-6">
         <button
-          onClick={() => navigate('/payments')}
+          onClick={() => {
+            setSelectedOrder(null);
+            setPayments([]);
+            navigate('/payments');
+          }}
           className="flex items-center text-blue-600 hover:text-blue-800"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Payments
+          Back to Orders
         </button>
       </div>
 
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Payments for Order {order.id}</h1>
+          <h1 className="text-2xl font-bold">Payments for Order {selectedOrder.id}</h1>
           <p className="text-gray-600 mt-1">
-            {order.type === 'sale' ? 'Sales' : 'Purchase'} order • {formatDateForDisplay(order.date)}
+            {selectedOrder.type === 'sale' ? 'Sales' : 'Purchase'} order • {formatDateForDisplay(selectedOrder.date)}
           </p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
           <CreditCard className="h-5 w-5 text-gray-500" />
           <span className="font-medium">Payment Status:</span>
           <span className={`capitalize ${
-            order.paymentStatus === 'completed' 
+            selectedOrder.paymentStatus === 'completed' 
               ? 'text-green-600' 
-              : order.paymentStatus === 'partial' 
+              : selectedOrder.paymentStatus === 'partial' 
               ? 'text-amber-600' 
               : 'text-red-600'
           }`}>
-            {order.paymentStatus}
+            {selectedOrder.paymentStatus}
           </span>
         </div>
       </div>
@@ -160,8 +155,24 @@ const PaymentsPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Payment Summary</h2>
+            <h2 className="text-lg font-semibold mb-4">Order Details</h2>
             <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Order Type</span>
+                <span className="font-medium capitalize">{selectedOrder.type}</span>
+              </div>
+              {selectedOrder.type === 'sale' && selectedOrder.customer && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Customer</span>
+                  <span className="font-medium">{selectedOrder.customer}</span>
+                </div>
+              )}
+              {selectedOrder.type === 'purchase' && selectedOrder.supplier && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Supplier</span>
+                  <span className="font-medium">{selectedOrder.supplier}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Total Order Amount</span>
                 <span className="font-medium">{formatCurrency(totalOrderAmount)}</span>
@@ -188,7 +199,7 @@ const PaymentsPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">Record Payment</h2>
           <PaymentForm 
-            orderId={order.id} 
+            orderId={selectedOrder.id} 
             onSuccess={handlePaymentSuccess}
           />
         </div>
