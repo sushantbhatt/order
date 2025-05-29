@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Calendar, CreditCard, FileText, BanknoteIcon } from 'lucide-react';
 import { createPayment } from '../services/paymentService';
 
@@ -9,7 +8,6 @@ interface PaymentFormProps {
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
-  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
@@ -58,7 +56,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           <div className="flex items-center gap-2">
