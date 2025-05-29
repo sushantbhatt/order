@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PaymentList from '../components/PaymentList';
 import PaymentForm from '../components/PaymentForm';
+import OrderList from '../components/OrderList';
 import { Payment, Order } from '../types';
 import { getPaymentsByOrderId } from '../services/paymentService';
-import { getOrderById } from '../services/orderService';
+import { getOrderById, getAllOrders } from '../services/orderService';
 import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
 import { CreditCard, ArrowLeft } from 'lucide-react';
 
@@ -13,8 +14,22 @@ const PaymentsPage: React.FC = () => {
   const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [order, setOrder] = useState<Order | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const allOrders = await getAllOrders();
+        setOrders(allOrders);
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,6 +70,10 @@ const PaymentsPage: React.FC = () => {
     }
   };
 
+  const handleOrderSelect = (orderId: string) => {
+    navigate(`/payments/${orderId}`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -66,20 +85,8 @@ const PaymentsPage: React.FC = () => {
   if (!id) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-md p-6 text-center">
-          <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Payments</h2>
-          <p className="text-gray-600 mb-6">
-            Please select an order to view or record payments.
-          </p>
-          <button
-            onClick={() => navigate('/orders')}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Go to Orders
-          </button>
-        </div>
+        <h1 className="text-2xl font-bold mb-6">Manage Payments</h1>
+        <OrderList orders={orders} onOrderSelect={handleOrderSelect} />
       </div>
     );
   }
@@ -94,10 +101,10 @@ const PaymentsPage: React.FC = () => {
                 {error || 'Order not found'}
               </p>
               <button
-                onClick={() => navigate('/orders')}
+                onClick={() => navigate('/payments')}
                 className="mt-2 text-sm text-red-700 underline"
               >
-                Return to Orders
+                Return to Payments
               </button>
             </div>
           </div>
@@ -120,11 +127,11 @@ const PaymentsPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-6">
         <button
-          onClick={() => navigate(`/orders/${order.id}`)}
+          onClick={() => navigate('/payments')}
           className="flex items-center text-blue-600 hover:text-blue-800"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Order
+          Back to Payments
         </button>
       </div>
 
