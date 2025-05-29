@@ -21,7 +21,7 @@ function App() {
             <Route path="/orders/:id" element={<OrderDetailPage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/payments/:id" element={<PaymentsPage />} />
-            <Route path="*" element={<Navigate to="/\" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>
