@@ -20,6 +20,7 @@ export interface Order {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  dispatches?: Dispatch[];
 }
 
 export interface OrderItem {
@@ -36,7 +37,7 @@ export interface Dispatch {
   orderId: string;
   date: string;
   quantity: number;
-  dispatchPrice: number | null;
+  dispatchPrice: number;
   invoiceNumber?: string;
   notes?: string;
   createdAt: string;

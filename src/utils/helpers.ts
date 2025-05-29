@@ -54,3 +54,13 @@ export const formatCurrency = (amount: number, format: 'lakhs' | 'regular' = 're
     maximumFractionDigits: 2
   }).format(amount);
 };
+
+// Calculate dispatch amount for an order
+export const calculateDispatchAmount = (order: Order): number => {
+  return order.dispatches?.reduce((total, dispatch) => {
+    // Get total commission from order items
+    const totalCommission = order.items.reduce((sum, item) => sum + item.commission, 0);
+    // Add dispatch price and commission, then multiply by dispatch quantity
+    return total + ((dispatch.dispatchPrice + totalCommission) * dispatch.quantity);
+  }, 0) || 0;
+};
