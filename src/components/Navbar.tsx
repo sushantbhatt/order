@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PackageSearch, Menu, X } from 'lucide-react';
+import { PackageSearch, Menu, X, CreditCard } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import AuthButton from './AuthButton';
 
@@ -73,6 +73,18 @@ const Navbar: React.FC = () => {
               >
                 Orders
               </Link>
+
+              <Link
+                to="/payments"
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive('/payments') 
+                    ? 'border-blue-500 text-gray-900'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                <CreditCard className="h-4 w-4 mr-1" />
+                Payments
+              </Link>
             </div>
           </div>
           
@@ -145,6 +157,18 @@ const Navbar: React.FC = () => {
             }`}
           >
             Orders
+          </Link>
+
+          <Link
+            to="/payments"
+            onClick={closeMenu}
+            className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+              isActive('/payments') 
+                ? 'bg-blue-50 border-blue-500 text-blue-700'
+                : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'
+            }`}
+          >
+            Payments
           </Link>
           
           <div className="pl-3 pr-4 py-2">
