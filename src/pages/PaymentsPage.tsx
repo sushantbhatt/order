@@ -4,99 +4,56 @@ import PaymentList from '../components/PaymentList';
 import PaymentForm from '../components/PaymentForm';
 import { Payment, Order } from '../types';
 import { getPaymentsByOrderId } from '../services/paymentService';
-import { getAllOrders } from '../services/orderService';
+import { getOrderById } from '../services/orderService';
 import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
-import { Search, Filter, X, CreditCard, Package, Truck } from 'lucide-react';
+import { CreditCard, ArrowLeft } from 'lucide-react';
 
 const PaymentsPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Filter states
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [customerFilter, setCustomerFilter] = useState('');
-  const [supplierFilter, setSupplierFilter] = useState('');
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string[]>([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchData = async () => {
+      if (!id) {
+        setError('No order ID provided');
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const data = await getAllOrders();
-        setOrders(data);
+        const [orderData, paymentsData] = await Promise.all([
+          getOrderById(id),
+          getPaymentsByOrderId(id)
+        ]);
+
+        if (!orderData) {
+          throw new Error('Order not found');
+        }
+
+        setOrder(orderData);
+        setPayments(paymentsData);
       } catch (err) {
-        console.error('Error fetching orders:', err);
-        setError('Failed to load orders. Please try again.');
+        console.error('Error fetching data:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchOrders();
-  }, []);
-
-  const handleOrderSelect = async (order: Order) => {
-    setSelectedOrder(order);
-    try {
-      const paymentsData = await getPaymentsByOrderId(order.id);
-      setPayments(paymentsData);
-    } catch (err) {
-      console.error('Error fetching payments:', err);
-      setError('Failed to load payments for this order.');
-    }
-  };
+    fetchData();
+  }, [id]);
 
   const handlePaymentSuccess = async () => {
-    if (selectedOrder) {
-      const updatedPayments = await getPaymentsByOrderId(selectedOrder.id);
+    if (id) {
+      const updatedPayments = await getPaymentsByOrderId(id);
+      const updatedOrder = await getOrderById(id);
       setPayments(updatedPayments);
-      
-      // Refresh orders list to update payment status
-      const updatedOrders = await getAllOrders();
-      setOrders(updatedOrders);
+      setOrder(updatedOrder);
     }
-  };
-
-  // Calculate dispatch amount for an order
-  const calculateDispatchAmount = (order: Order) => {
-    return order.dispatches?.reduce((total, dispatch) => {
-      // Get total commission from order items
-      const totalCommission = order.items.reduce((sum, item) => sum + item.commission, 0);
-      // Add dispatch price and commission, then multiply by dispatch quantity
-      return total + ((dispatch.dispatchPrice + totalCommission) * dispatch.quantity);
-    }, 0) || 0;
-  };
-
-  const filteredOrders = orders.filter(order => {
-    const query = searchQuery.toLowerCase();
-    const matchesSearch = 
-      order.id.toLowerCase().includes(query) ||
-      (order.customer?.toLowerCase().includes(query) || false) ||
-      (order.supplier?.toLowerCase().includes(query) || false);
-    
-    if (!matchesSearch) return false;
-    if (customerFilter && (!order.customer || !order.customer.toLowerCase().includes(customerFilter.toLowerCase()))) return false;
-    if (supplierFilter && (!order.supplier || !order.supplier.toLowerCase().includes(supplierFilter.toLowerCase()))) return false;
-    if (paymentStatusFilter.length > 0 && !paymentStatusFilter.includes(order.paymentStatus)) return false;
-    if (startDate && order.date < startDate) return false;
-    if (endDate && order.date > endDate) return false;
-    
-    return true;
-  });
-
-  const clearFilters = () => {
-    setSearchQuery('');
-    setCustomerFilter('');
-    setSupplierFilter('');
-    setPaymentStatusFilter([]);
-    setStartDate('');
-    setEndDate(new Date().toISOString().split('T')[0]);
   };
 
   if (isLoading) {
@@ -107,226 +64,106 @@ const PaymentsPage: React.FC = () => {
     );
   }
 
+  if (error || !order) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-red-700">
+                {error || 'Order not found'}
+              </p>
+              <button
+                onClick={() => navigate('/orders')}
+                className="mt-2 text-sm text-red-700 underline"
+              >
+                Return to Orders
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate total order amount
+  const totalOrderAmount = order.items.reduce((sum, item) => 
+    sum + ((item.price + item.commission) * item.quantity), 0);
+
+  // Calculate total paid amount
+  const totalPaidAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+
+  // Calculate remaining amount
+  const remainingAmount = totalOrderAmount - totalPaidAmount;
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Manage Payments</h1>
-      </div>
-
-      <div className="mb-4 flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-grow">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search orders..."
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        
         <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          onClick={() => navigate(`/orders/${order.id}`)}
+          className="flex items-center text-blue-600 hover:text-blue-800"
         >
-          <Filter className="h-5 w-5 mr-2" />
-          Filters
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to Order
         </button>
       </div>
 
-      {showFilters && (
-        <div className="bg-white p-4 rounded-lg shadow mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-medium text-gray-700">Filters</h3>
-            <button 
-              onClick={clearFilters}
-              className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Clear filters
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Customer</label>
-              <input
-                type="text"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                value={customerFilter}
-                onChange={(e) => setCustomerFilter(e.target.value)}
-                placeholder="Filter by customer..."
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Supplier</label>
-              <input
-                type="text"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                value={supplierFilter}
-                onChange={(e) => setSupplierFilter(e.target.value)}
-                placeholder="Filter by supplier..."
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Payment Status</label>
-              <div className="mt-1 space-y-2">
-                {['pending', 'partial', 'completed'].map((status) => (
-                  <label key={status} className="inline-flex items-center mr-4">
-                    <input
-                      type="checkbox"
-                      checked={paymentStatusFilter.includes(status)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setPaymentStatusFilter([...paymentStatusFilter, status]);
-                        } else {
-                          setPaymentStatusFilter(paymentStatusFilter.filter(s => s !== status));
-                        }
-                      }}
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 capitalize">{status}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Date Range</label>
-              <div className="mt-1 space-y-2">
-                <input
-                  type="date"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-                <input
-                  type="date"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold">Payments for Order {order.id}</h1>
+          <p className="text-gray-600 mt-1">
+            {order.type === 'sale' ? 'Sales' : 'Purchase'} order • {formatDateForDisplay(order.date)}
+          </p>
         </div>
-      )}
+        <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+          <CreditCard className="h-5 w-5 text-gray-500" />
+          <span className="font-medium">Payment Status:</span>
+          <span className={`capitalize ${
+            order.paymentStatus === 'completed' 
+              ? 'text-green-600' 
+              : order.paymentStatus === 'partial' 
+              ? 'text-amber-600' 
+              : 'text-red-600'
+          }`}>
+            {order.paymentStatus}
+          </span>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Orders</h3>
-          </div>
-          <div className="border-t border-gray-200">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Order ID
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Customer/Supplier
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Order Amount
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Dispatch Amount
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredOrders.map((order) => {
-                    const orderAmount = order.items.reduce((sum, item) => 
-                      sum + ((item.price + item.commission) * item.quantity), 0);
-                    const dispatchAmount = calculateDispatchAmount(order);
-                    
-                    return (
-                      <tr
-                        key={order.id}
-                        onClick={() => handleOrderSelect(order)}
-                        className={`hover:bg-gray-50 cursor-pointer ${
-                          selectedOrder?.id === order.id ? 'bg-blue-50' : ''
-                        }`}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          <div className="flex items-center">
-                            {order.type === 'sale' ? (
-                              <Truck className="h-4 w-4 text-blue-600 mr-2" />
-                            ) : (
-                              <Package className="h-4 w-4 text-emerald-600 mr-2" />
-                            )}
-                            {order.id}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDateForDisplay(order.date)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {order.type === 'sale' ? order.customer : order.supplier}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatCurrency(orderAmount)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatCurrency(dispatchAmount)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            order.paymentStatus === 'completed'
-                              ? 'bg-green-100 text-green-800'
-                              : order.paymentStatus === 'partial'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {order.paymentStatus}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Payment Summary</h2>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Order Amount</span>
+                <span className="font-medium">{formatCurrency(totalOrderAmount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Total Paid Amount</span>
+                <span className="font-medium text-green-600">{formatCurrency(totalPaidAmount)}</span>
+              </div>
+              <div className="pt-2 border-t">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Remaining Amount</span>
+                  <span className="font-medium text-red-600">{formatCurrency(remainingAmount)}</span>
+                </div>
+              </div>
             </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-4">Payment History</h2>
+            <PaymentList payments={payments} />
           </div>
         </div>
 
-        <div className="space-y-6">
-          {selectedOrder ? (
-            <>
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold mb-4">Record Payment</h2>
-                <PaymentForm 
-                  orderId={selectedOrder.id} 
-                  onSuccess={handlePaymentSuccess}
-                />
-              </div>
-
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold mb-4">Payment History</h2>
-                <PaymentList payments={payments} />
-              </div>
-            </>
-          ) : (
-            <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-              <CreditCard className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No order selected</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Select an order from the list to view and manage its payments
-              </p>
-            </div>
-          )}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold mb-4">Record Payment</h2>
+          <PaymentForm 
+            orderId={order.id} 
+            onSuccess={handlePaymentSuccess}
+          />
         </div>
       </div>
     </div>
