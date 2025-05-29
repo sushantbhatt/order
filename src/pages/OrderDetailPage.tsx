@@ -56,9 +56,12 @@ const OrderDetailPage: React.FC = () => {
     );
   }
 
-  // Calculate total dispatch amount
-  const totalDispatchAmount = dispatches.reduce((sum, dispatch) => 
-    sum + ((dispatch.dispatchPrice || 0) * dispatch.quantity), 0);
+  // Calculate total dispatch amount including commission
+  const totalDispatchAmount = dispatches.reduce((sum, dispatch) => {
+    // Find the corresponding item's commission
+    const itemCommission = order.items.reduce((total, item) => total + item.commission, 0) / order.items.length;
+    return sum + ((dispatch.dispatchPrice + itemCommission) * dispatch.quantity);
+  }, 0);
 
   // Calculate total order amount including commission
   const totalOrderAmount = order.items.reduce((sum, item) => 
