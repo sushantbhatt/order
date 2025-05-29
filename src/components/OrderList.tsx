@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import { Order, OrderType } from '../types';
 import OrderCard from './OrderCard';
-import { getTodayDate } from '../utils/helpers';
+import { getTodayDate, formatCurrency } from '../utils/helpers';
 
 interface OrderListProps {
   orders: Order[];
@@ -23,6 +23,16 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
         ? prev.filter(s => s !== status)
         : [...prev, status]
     );
+  };
+
+  // Calculate dispatch amount for an order
+  const calculateDispatchAmount = (order: Order) => {
+    return order.dispatches?.reduce((total, dispatch) => {
+      // Get total commission from order items
+      const totalCommission = order.items.reduce((sum, item) => sum + item.commission, 0);
+      // Add dispatch price and commission, then multiply by dispatch quantity
+      return total + ((dispatch.dispatchPrice + totalCommission) * dispatch.quantity);
+    }, 0) || 0;
   };
 
   // Apply filters
@@ -164,10 +174,102 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
           <p className="text-gray-500">No orders found matching your criteria.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredOrders.map((order) => (
-            <OrderCard key={order.id} order={order} onClick={onOrderSelect} />
-          ))}
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Order ID
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Customer/Supplier
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Qty
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Dispatch Qty
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Dispatch Amount
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Payment Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredOrders.map((order) => {
+                  const dispatchQuantity = order.dispatches?.reduce((sum, dispatch) => sum + dispatch.quantity, 0) || 0;
+                  const dispatchAmount = calculateDispatchAmount(order);
+                  
+                  return (
+                    <tr
+                      key={order.id}
+                      onClick={() => onOrderSelect(order.id)}
+                      className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
+                    >
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {order.id}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                        {order.type}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {order.date}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {order.type === 'sale' ? order.customer : order.supplier}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {order.totalQuantity?.toFixed(2)}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {dispatchQuantity.toFixed(2)}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatCurrency(dispatchAmount)}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          order.status === 'completed'
+                            ? 'bg-green-100 text-green-800'
+                            : order.status === 'partial'
+                            ? 'bg-amber-100 text-amber-800'
+                            : order.status === 'cancelled'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          order.paymentStatus === 'completed'
+                            ? 'bg-green-100 text-green-800'
+                            : order.paymentStatus === 'partial'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {order.paymentStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
