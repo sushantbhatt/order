@@ -42,10 +42,15 @@ export const formatDateForDisplay = (dateString: string): string => {
   });
 };
 
-// Format currency
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-US', {
+// Format currency in lakhs
+export const formatCurrency = (amount: number, format: 'lakhs' | 'regular' = 'regular'): string => {
+  if (format === 'lakhs' && amount >= 100000) {
+    const lakhs = (amount / 100000).toFixed(1);
+    return `₹${lakhs} L`;
+  }
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'INR',
+    maximumFractionDigits: 2
   }).format(amount);
 };

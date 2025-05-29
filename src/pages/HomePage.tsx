@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Truck, PackageCheck, ClipboardList, Package, TrendingUp, TrendingDown, Box, Boxes } from 'lucide-react';
 import { getDashboardStats } from '../services/statsService';
+import { formatCurrency } from '../utils/helpers';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -116,7 +117,9 @@ const HomePage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Sales</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.totalSalesAmount?.toFixed(2)}</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {formatCurrency(stats.totalSalesAmount, 'lakhs')}
+              </p>
             </div>
           </div>
         </div>
@@ -128,7 +131,9 @@ const HomePage: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Total Purchases</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.totalPurchaseAmount?.toFixed(2)}</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {formatCurrency(stats.totalPurchaseAmount, 'lakhs')}
+              </p>
             </div>
           </div>
         </div>
