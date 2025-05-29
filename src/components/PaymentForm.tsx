@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Calendar, CreditCard, FileText, BanknoteIcon } from 'lucide-react';
 import { createPayment } from '../services/paymentService';
 
@@ -9,7 +8,6 @@ interface PaymentFormProps {
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
-  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
