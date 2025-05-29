@@ -8,9 +8,9 @@ import { formatCurrency, formatDateForDisplay } from '../utils/helpers';
 import { CreditCard, Search, Filter, X } from 'lucide-react';
 
 const PaymentsPage: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -76,6 +76,27 @@ const PaymentsPage: React.FC = () => {
   const calculateTotalAmount = (order: Order) => {
     return order.items.reduce((sum, item) => 
       sum + ((item.price + item.commission) * item.quantity), 0);
+  };
+
+  const calculateTotalPaidAmount = (orderPayments: Payment[]) => {
+    return orderPayments.reduce((sum, payment) => sum + payment.amount, 0);
+  };
+
+  const getPaymentStatus = (order: Order, orderPayments: Payment[]) => {
+    const totalAmount = calculateTotalAmount(order);
+    const paidAmount = calculateTotalPaidAmount(orderPayments);
+    
+    if (paidAmount === 0) return 'pending';
+    if (paidAmount >= totalAmount) return 'completed';
+    return 'partial';
+  };
+
+  const calculateDispatchedQuantity = (order: Order) => {
+    return order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
+  };
+
+  const calculateDispatchAmount = (order: Order) => {
+    return order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.dispatchPrice || 0), 0) || 0;
   };
 
   const clearFilters = () => {
@@ -250,47 +271,72 @@ const PaymentsPage: React.FC = () => {
                       Customer/Supplier
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
+                      Quantity
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      Dispatched
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Order Amount
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Dispatch Amount
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Payment Status
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredOrders.map((order) => (
-                    <tr
-                      key={order.id}
-                      onClick={() => setSelectedOrder(order)}
-                      className={`hover:bg-gray-50 cursor-pointer ${
-                        selectedOrder?.id === order.id ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {order.id}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDateForDisplay(order.date)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {order.type === 'sale' ? order.customer : order.supplier}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatCurrency(calculateTotalAmount(order))}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          order.paymentStatus === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : order.paymentStatus === 'partial'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {order.paymentStatus}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {filteredOrders.map((order) => {
+                    const orderPayments = payments.filter(p => p.orderId === order.id);
+                    const paymentStatus = getPaymentStatus(order, orderPayments);
+                    const dispatchedQty = calculateDispatchedQuantity(order);
+                    const dispatchAmount = calculateDispatchAmount(order);
+
+                    return (
+                      <tr
+                        key={order.id}
+                        onClick={() => setSelectedOrder(order)}
+                        className={`hover:bg-gray-50 cursor-pointer ${
+                          selectedOrder?.id === order.id ? 'bg-blue-50' : ''
+                        }`}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {order.id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDateForDisplay(order.date)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {order.type === 'sale' ? order.customer : order.supplier}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {order.totalQuantity.toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {dispatchedQty.toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatCurrency(calculateTotalAmount(order))}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatCurrency(dispatchAmount)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            paymentStatus === 'completed'
+                              ? 'bg-green-100 text-green-800'
+                              : paymentStatus === 'partial'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {paymentStatus}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
