@@ -183,7 +183,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
                           ? 'bg-amber-100 text-amber-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {order.paymentStatus}
+                        {order.paymentStatus || 'pending'}
                       </span>
                     </td>
                   </tr>
