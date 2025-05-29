@@ -18,14 +18,16 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<Pay
     throw new Error('User must be logged in to create a payment');
   }
 
-  // Destructure payment_status from paymentData to separate order update data from payment data
-  const { payment_status, ...paymentInsertData } = paymentData;
-
   // Start a transaction
   const { data: payment, error: paymentError } = await supabase
     .from('payments')
     .insert({
-      ...paymentInsertData,
+      order_id: paymentData.order_id,
+      amount: paymentData.amount,
+      payment_date: paymentData.payment_date,
+      payment_mode: paymentData.payment_mode,
+      reference_number: paymentData.reference_number,
+      notes: paymentData.notes,
       user_id: session.session.user.id
     })
     .select()
@@ -38,12 +40,22 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<Pay
   // Update order payment status
   const { error: orderError } = await supabase
     .from('orders')
-    .update({ payment_status })
+    .update({ 
+      payment_status: paymentData.payment_status,
+      updated_at: new Date().toISOString()
+    })
     .eq('id', paymentData.order_id);
 
   if (orderError) {
     throw orderError;
   }
+
+  // Get updated order data
+  const { data: orderData } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('id', paymentData.order_id)
+    .single();
 
   return {
     id: payment.id,
@@ -53,7 +65,8 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<Pay
     paymentMode: payment.payment_mode,
     referenceNumber: payment.reference_number,
     notes: payment.notes,
-    createdAt: payment.created_at
+    createdAt: payment.created_at,
+    order: orderData
   };
 };
 
