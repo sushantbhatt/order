@@ -22,3 +22,17 @@ export const createPayment = async (payment: Payment) => {
 
   return data;
 };
+
+export const getPaymentsByOrderId = async (orderId: string) => {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('order_id', orderId)
+    .order('payment_date', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+};
