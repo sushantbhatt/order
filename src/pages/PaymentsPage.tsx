@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { getAllOrders } from '../services/orderService';
-import { getPaymentsByOrderId } from '../services/paymentService';
-import { Order, Payment } from '../types';
+import { useNavigate } from 'react-router-dom';
 import PaymentList from '../components/PaymentList';
 import PaymentForm from '../components/PaymentForm';
-import { formatCurrency, formatDateForDisplay } from '../utils/helpers';
-import { CreditCard, Search, Filter, X } from 'lucide-react';
+import { Payment, Order } from '../types';
+import { getPaymentsByOrderId } from '../services/paymentService';
+import { getAllOrders } from '../services/orderService';
+import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
+import { Search, Filter, X, CreditCard } from 'lucide-react';
 
 const PaymentsPage: React.FC = () => {
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Filters
+  // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [customerFilter, setCustomerFilter] = useState('');
@@ -28,10 +30,10 @@ const PaymentsPage: React.FC = () => {
       try {
         const data = await getAllOrders();
         setOrders(data);
-        setIsLoading(false);
       } catch (err) {
         console.error('Error fetching orders:', err);
-        setError('Failed to load orders');
+        setError('Failed to load orders. Please try again.');
+      } finally {
         setIsLoading(false);
       }
     };
@@ -39,71 +41,44 @@ const PaymentsPage: React.FC = () => {
     fetchOrders();
   }, []);
 
-  useEffect(() => {
-    const fetchPayments = async () => {
-      if (selectedOrder) {
-        try {
-          const paymentsData = await getPaymentsByOrderId(selectedOrder.id);
-          setPayments(paymentsData);
-        } catch (err) {
-          console.error('Error fetching payments:', err);
-          setError('Failed to load payments');
-        }
-      } else {
-        setPayments([]);
-      }
-    };
-
-    fetchPayments();
-  }, [selectedOrder]);
-
-  const handlePaymentSuccess = async () => {
-    if (!selectedOrder) return;
-    
+  const handleOrderSelect = async (order: Order) => {
+    setSelectedOrder(order);
     try {
-      const updatedPayments = await getPaymentsByOrderId(selectedOrder.id);
-      setPayments(updatedPayments);
-      
-      // Refresh orders to get updated payment status
-      const updatedOrders = await getAllOrders();
-      setOrders(updatedOrders);
+      const paymentsData = await getPaymentsByOrderId(order.id);
+      setPayments(paymentsData);
     } catch (err) {
-      console.error('Error updating payments:', err);
-      setError('Failed to update payments');
+      console.error('Error fetching payments:', err);
+      setError('Failed to load payments for this order.');
     }
   };
 
-  const calculateTotalAmount = (order: Order) => {
-    return order.items.reduce((sum, item) => 
-      sum + ((item.price + item.commission) * item.quantity), 0);
-  };
-
-  const calculateTotalPaidAmount = (orderPayments: Payment[]) => {
-    return orderPayments.reduce((sum, payment) => sum + payment.amount, 0);
-  };
-
-  const getPaymentStatus = (order: Order, orderPayments: Payment[]) => {
-    const totalAmount = calculateTotalAmount(order);
-    const paidAmount = calculateTotalPaidAmount(orderPayments);
-    
-    if (paidAmount === 0) return 'pending';
-    if (paidAmount >= totalAmount) return 'completed';
-    return 'partial';
-  };
-
-  const calculateDispatchedQuantity = (order: Order) => {
-    return order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
-  };
-
-  const calculateDispatchAmount = (order: Order) => {
-    return order.dispatches?.reduce((sum, dispatch) => {
-      // Get the commission for this dispatch from order items
-      const totalCommission = order.items.reduce((sum, item) => sum + item.commission, 0);
+  const handlePaymentSuccess = async () => {
+    if (selectedOrder) {
+      const updatedPayments = await getPaymentsByOrderId(selectedOrder.id);
+      setPayments(updatedPayments);
       
-      // Add dispatch price and commission, then multiply by quantity
-      return sum + ((dispatch.dispatchPrice || 0) + totalCommission) * dispatch.quantity;
-    }, 0) || 0;
+      // Refresh orders list to update payment status
+      const updatedOrders = await getAllOrders();
+      setOrders(updatedOrders);
+    }
   };
+
+  const filteredOrders = orders.filter(order => {
+    const query = searchQuery.toLowerCase();
+    const matchesSearch = 
+      order.id.toLowerCase().includes(query) ||
+      (order.customer?.toLowerCase().includes(query) || false) ||
+      (order.supplier?.toLowerCase().includes(query) || false);
+    
+    if (!matchesSearch) return false;
+    if (customerFilter && (!order.customer || !order.customer.toLowerCase().includes(customerFilter.toLowerCase()))) return false;
+    if (supplierFilter && (!order.supplier || !order.supplier.toLowerCase().includes(supplierFilter.toLowerCase()))) return false;
+    if (paymentStatusFilter.length > 0 && !paymentStatusFilter.includes(order.paymentStatus)) return false;
+    if (startDate && order.date < startDate) return false;
+    if (endDate && order.date > endDate) return false;
+    
+    return true;
+  });
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -113,16 +88,6 @@ const PaymentsPage: React.FC = () => {
     setStartDate('');
     setEndDate(new Date().toISOString().split('T')[0]);
   };
-
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCustomer = !customerFilter || (order.customer?.toLowerCase().includes(customerFilter.toLowerCase()) ?? false);
-    const matchesSupplier = !supplierFilter || (order.supplier?.toLowerCase().includes(supplierFilter.toLowerCase()) ?? false);
-    const matchesPaymentStatus = paymentStatusFilter.length === 0 || paymentStatusFilter.includes(order.paymentStatus);
-    const matchesDateRange = (!startDate || order.date >= startDate) && (!endDate || order.date <= endDate);
-
-    return matchesSearch && matchesCustomer && matchesSupplier && matchesPaymentStatus && matchesDateRange;
-  });
 
   if (isLoading) {
     return (
@@ -134,42 +99,38 @@ const PaymentsPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">Payment Management</h1>
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search order ID..."
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <Filter className="h-5 w-5 mr-2" />
-            Filters
-          </button>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Manage Payments</h1>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-          <p className="text-sm text-red-700">{error}</p>
+      <div className="mb-4 flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-grow">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search orders..."
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-      )}
+        
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <Filter className="h-5 w-5 mr-2" />
+          Filters
+        </button>
+      </div>
 
       {showFilters && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="bg-white p-4 rounded-lg shadow mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium">Filters</h2>
-            <button
+            <h3 className="font-medium text-gray-700">Filters</h3>
+            <button 
               onClick={clearFilters}
               className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
             >
@@ -178,14 +139,12 @@ const PaymentsPage: React.FC = () => {
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Customer
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Customer</label>
               <input
                 type="text"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 value={customerFilter}
                 onChange={(e) => setCustomerFilter(e.target.value)}
                 placeholder="Filter by customer..."
@@ -193,12 +152,10 @@ const PaymentsPage: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Supplier
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Supplier</label>
               <input
                 type="text"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 value={supplierFilter}
                 onChange={(e) => setSupplierFilter(e.target.value)}
                 placeholder="Filter by supplier..."
@@ -206,23 +163,21 @@ const PaymentsPage: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Payment Status
-              </label>
-              <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Payment Status</label>
+              <div className="mt-1 space-y-2">
                 {['pending', 'partial', 'completed'].map((status) => (
                   <label key={status} className="inline-flex items-center mr-4">
                     <input
                       type="checkbox"
                       checked={paymentStatusFilter.includes(status)}
-                      onChange={() => {
-                        setPaymentStatusFilter(prev =>
-                          prev.includes(status)
-                            ? prev.filter(s => s !== status)
-                            : [...prev, status]
-                        );
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setPaymentStatusFilter([...paymentStatusFilter, status]);
+                        } else {
+                          setPaymentStatusFilter(paymentStatusFilter.filter(s => s !== status));
+                        }
                       }}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     />
                     <span className="ml-2 text-sm text-gray-700 capitalize">{status}</span>
                   </label>
@@ -231,38 +186,32 @@ const PaymentsPage: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                From Date
-              </label>
-              <input
-                type="date"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                To Date
-              </label>
-              <input
-                type="date"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+              <label className="block text-sm font-medium text-gray-700">Date Range</label>
+              <div className="mt-1 space-y-2">
+                <input
+                  type="date"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+                <input
+                  type="date"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium">Orders</h2>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-4 py-5 sm:px-6">
+            <h3 className="text-lg font-medium leading-6 text-gray-900">Orders</h3>
+          </div>
+          <div className="border-t border-gray-200">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -277,33 +226,22 @@ const PaymentsPage: React.FC = () => {
                       Customer/Supplier
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Quantity
+                      Amount
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Dispatched
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Order Amount
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Dispatch Amount
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Payment Status
+                      Status
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredOrders.map((order) => {
-                    const orderPayments = payments.filter(p => p.orderId === order.id);
-                    const paymentStatus = getPaymentStatus(order, orderPayments);
-                    const dispatchedQty = calculateDispatchedQuantity(order);
-                    const dispatchAmount = calculateDispatchAmount(order);
-
+                    const totalAmount = order.items.reduce((sum, item) => 
+                      sum + ((item.price + item.commission) * item.quantity), 0);
+                    
                     return (
                       <tr
                         key={order.id}
-                        onClick={() => setSelectedOrder(order)}
+                        onClick={() => handleOrderSelect(order)}
                         className={`hover:bg-gray-50 cursor-pointer ${
                           selectedOrder?.id === order.id ? 'bg-blue-50' : ''
                         }`}
@@ -318,26 +256,17 @@ const PaymentsPage: React.FC = () => {
                           {order.type === 'sale' ? order.customer : order.supplier}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {order.totalQuantity.toFixed(2)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {dispatchedQty.toFixed(2)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatCurrency(calculateTotalAmount(order))}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatCurrency(dispatchAmount)}
+                          {formatCurrency(totalAmount)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            paymentStatus === 'completed'
+                            order.paymentStatus === 'completed'
                               ? 'bg-green-100 text-green-800'
-                              : paymentStatus === 'partial'
+                              : order.paymentStatus === 'partial'
                               ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-red-100 text-red-800'
                           }`}>
-                            {paymentStatus}
+                            {order.paymentStatus}
                           </span>
                         </td>
                       </tr>
@@ -352,49 +281,25 @@ const PaymentsPage: React.FC = () => {
         <div className="space-y-6">
           {selectedOrder ? (
             <>
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-lg font-medium mb-4">Payment Details</h2>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Order ID</span>
-                    <span className="font-medium">{selectedOrder.id}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">
-                      {selectedOrder.type === 'sale' ? 'Customer' : 'Supplier'}
-                    </span>
-                    <span className="font-medium">
-                      {selectedOrder.type === 'sale' ? selectedOrder.customer : selectedOrder.supplier}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Amount</span>
-                    <span className="font-medium">
-                      {formatCurrency(calculateTotalAmount(selectedOrder))}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-lg font-medium mb-4">Record Payment</h2>
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold mb-4">Record Payment</h2>
                 <PaymentForm 
                   orderId={selectedOrder.id} 
                   onSuccess={handlePaymentSuccess}
                 />
               </div>
 
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-lg font-medium mb-4">Payment History</h2>
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-lg font-semibold mb-4">Payment History</h2>
                 <PaymentList payments={payments} />
               </div>
             </>
           ) : (
-            <div className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 p-6 text-center">
+            <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
               <CreditCard className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No Order Selected</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No order selected</h3>
               <p className="mt-1 text-sm text-gray-500">
-                Select an order from the list to view and manage payments
+                Select an order from the list to view and manage its payments
               </p>
             </div>
           )}
@@ -405,5 +310,3 @@ const PaymentsPage: React.FC = () => {
 };
 
 export default PaymentsPage;
-
-export default PaymentsPage
