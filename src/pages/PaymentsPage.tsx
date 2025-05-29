@@ -9,7 +9,7 @@ import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
 import { CreditCard, ArrowLeft } from 'lucide-react';
 
 const PaymentsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [order, setOrder] = useState<Order | null>(null);
@@ -19,7 +19,6 @@ const PaymentsPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!id) {
-        setError('No order ID provided');
         setIsLoading(false);
         return;
       }
@@ -60,6 +59,27 @@ const PaymentsPage: React.FC = () => {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!id) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Payments</h2>
+          <p className="text-gray-600 mb-6">
+            Please select an order to view or record payments.
+          </p>
+          <button
+            onClick={() => navigate('/orders')}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Go to Orders
+          </button>
+        </div>
       </div>
     );
   }
