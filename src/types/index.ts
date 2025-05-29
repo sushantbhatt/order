@@ -2,6 +2,10 @@ export type OrderType = 'sale' | 'purchase';
 
 export type OrderStatus = 'pending' | 'partial' | 'completed' | 'cancelled';
 
+export type PaymentStatus = 'pending' | 'partial' | 'completed';
+
+export type PaymentMode = 'cash' | 'cheque' | 'bank_transfer' | 'upi';
+
 export interface Order {
   id: string;
   type: OrderType;
@@ -12,6 +16,7 @@ export interface Order {
   totalQuantity: number;
   remainingQuantity: number;
   status: OrderStatus;
+  paymentStatus: PaymentStatus;
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -33,6 +38,17 @@ export interface Dispatch {
   quantity: number;
   dispatchPrice: number | null;
   invoiceNumber?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface Payment {
+  id: string;
+  orderId: string;
+  amount: number;
+  paymentDate: string;
+  paymentMode: PaymentMode;
+  referenceNumber?: string;
   notes?: string;
   createdAt: string;
 }
