@@ -1,7 +1,7 @@
 import React from 'react';
-import { Package, Truck, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Package, Truck, AlertCircle, CheckCircle, Clock, CreditCard } from 'lucide-react';
 import { Order } from '../types';
-import { formatDateForDisplay } from '../utils/helpers';
+import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
 
 interface OrderCardProps {
   order: Order;
@@ -35,11 +35,9 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onClick }) => {
     }
   };
 
-  // Calculate total quantity from items if not available directly
-  const totalQuantity = order.totalQuantity || order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-  
-  // Calculate remaining quantity, defaulting to total if not set
-  const remainingQuantity = typeof order.remainingQuantity === 'number' ? order.remainingQuantity : totalQuantity;
+  // Calculate total amount
+  const totalAmount = order.items.reduce((sum, item) => 
+    sum + ((item.quantity + item.commission) * item.price), 0);
 
   return (
     <div 
@@ -57,9 +55,15 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onClick }) => {
             {order.id}
           </span>
         </div>
-        <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${getStatusColor(order.status)}`}>
-          {getStatusIcon(order.status)}
-          <span className="ml-1 capitalize">{order.status}</span>
+        <div className="flex gap-2">
+          <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${getStatusColor(order.status)}`}>
+            {getStatusIcon(order.status)}
+            <span className="ml-1 capitalize">{order.status}</span>
+          </div>
+          <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${getStatusColor(order.paymentStatus)}`}>
+            <CreditCard className="h-4 w-4 mr-1" />
+            <span className="capitalize">{order.paymentStatus}</span>
+          </div>
         </div>
       </div>
       
@@ -85,16 +89,21 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onClick }) => {
         
         <div className="flex justify-between">
           <span className="text-gray-500">Total Quantity:</span>
-          <span className="font-medium">{totalQuantity}</span>
+          <span className="font-medium">{order.totalQuantity}</span>
         </div>
         
         <div className="flex justify-between">
           <span className="text-gray-500">Remaining:</span>
           <span className={`font-medium ${
-            remainingQuantity > 0 ? 'text-amber-600' : 'text-green-600'
+            order.remainingQuantity > 0 ? 'text-amber-600' : 'text-green-600'
           }`}>
-            {remainingQuantity}
+            {order.remainingQuantity}
           </span>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-gray-500">Amount:</span>
+          <span className="font-medium">{formatCurrency(totalAmount)}</span>
         </div>
       </div>
     </div>
