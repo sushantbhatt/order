@@ -9,9 +9,12 @@ const HomePage: React.FC = () => {
   const [stats, setStats] = useState({
     totalSalesAmount: 0,
     totalPurchaseAmount: 0,
-    totalQuantityOrdered: 0,
-    quantityDispatched: 0,
-    quantityLeft: 0
+    salesQuantity: 0,
+    purchaseQuantity: 0,
+    salesDispatched: 0,
+    purchaseDispatched: 0,
+    salesRemaining: 0,
+    purchaseRemaining: 0
   });
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -109,7 +112,7 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
@@ -140,36 +143,44 @@ const HomePage: React.FC = () => {
 
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
-            <div className="flex-shrink-0 bg-purple-100 rounded-md p-3">
-              <Box className="h-6 w-6 text-purple-600" />
+            <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
+              <Box className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Total Quantity</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.totalQuantityOrdered?.toFixed(2)}</p>
+              <p className="text-sm font-medium text-gray-500">Sales Quantity</p>
+              <div className="space-y-1">
+                <p className="text-lg font-semibold text-gray-900">
+                  Total: {stats.salesQuantity.toFixed(2)}
+                </p>
+                <p className="text-sm text-amber-600">
+                  Dispatched: {stats.salesDispatched.toFixed(2)}
+                </p>
+                <p className="text-sm text-red-600">
+                  Remaining: {stats.salesRemaining.toFixed(2)}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center">
-            <div className="flex-shrink-0 bg-amber-100 rounded-md p-3">
-              <Package className="h-6 w-6 text-amber-600" />
+            <div className="flex-shrink-0 bg-emerald-100 rounded-md p-3">
+              <Box className="h-6 w-6 text-emerald-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Dispatched</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.quantityDispatched?.toFixed(2)}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 bg-red-100 rounded-md p-3">
-              <Boxes className="h-6 w-6 text-red-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Remaining</p>
-              <p className="text-2xl font-semibold text-gray-900">{stats.quantityLeft?.toFixed(2)}</p>
+              <p className="text-sm font-medium text-gray-500">Purchase Quantity</p>
+              <div className="space-y-1">
+                <p className="text-lg font-semibold text-gray-900">
+                  Total: {stats.purchaseQuantity.toFixed(2)}
+                </p>
+                <p className="text-sm text-amber-600">
+                  Dispatched: {stats.purchaseDispatched.toFixed(2)}
+                </p>
+                <p className="text-sm text-red-600">
+                  Remaining: {stats.purchaseRemaining.toFixed(2)}
+                </p>
+              </div>
             </div>
           </div>
         </div>

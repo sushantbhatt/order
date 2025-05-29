@@ -38,24 +38,36 @@ export const getDashboardStats = async (filters: {
 
   if (error) throw error;
 
+  const salesOrders = orders?.filter(order => order.type === 'sale') || [];
+  const purchaseOrders = orders?.filter(order => order.type === 'purchase') || [];
+
   const stats = {
-    totalSalesAmount: orders
-      ?.filter(order => order.type === 'sale')
+    totalSalesAmount: salesOrders
       .reduce((sum, order) => {
         const orderTotal = order.items.reduce((itemSum, item) => 
           itemSum + ((item.quantity + item.commission) * item.price), 0);
         return sum + orderTotal;
       }, 0) || 0,
-    totalPurchaseAmount: orders
-      ?.filter(order => order.type === 'purchase')
+    totalPurchaseAmount: purchaseOrders
       .reduce((sum, order) => {
         const orderTotal = order.items.reduce((itemSum, item) => 
           itemSum + ((item.quantity + item.commission) * item.price), 0);
         return sum + orderTotal;
       }, 0) || 0,
-    totalQuantityOrdered: orders?.reduce((sum, order) => sum + order.total_quantity, 0) || 0,
-    quantityDispatched: orders?.reduce((sum, order) => sum + (order.total_quantity - order.remaining_quantity), 0) || 0,
-    quantityLeft: orders?.reduce((sum, order) => sum + order.remaining_quantity, 0) || 0
+    salesQuantity: salesOrders.reduce((sum, order) => sum + order.total_quantity, 0) || 0,
+    purchaseQuantity: purchaseOrders.reduce((sum, order) => sum + order.total_quantity, 0) || 0,
+    salesDispatched: salesOrders.reduce((sum, order) => 
+      sum + (order.dispatches?.reduce((dSum, dispatch) => dSum + (dispatch.quantity || 0), 0) || 0), 0) || 0,
+    purchaseDispatched: purchaseOrders.reduce((sum, order) => 
+      sum + (order.dispatches?.reduce((dSum, dispatch) => dSum + (dispatch.quantity || 0), 0) || 0), 0) || 0,
+    salesRemaining: salesOrders.reduce((sum, order) => {
+      const dispatched = order.dispatches?.reduce((dSum, dispatch) => dSum + (dispatch.quantity || 0), 0) || 0;
+      return sum + (order.total_quantity - dispatched);
+    }, 0) || 0,
+    purchaseRemaining: purchaseOrders.reduce((sum, order) => {
+      const dispatched = order.dispatches?.reduce((dSum, dispatch) => dSum + (dispatch.quantity || 0), 0) || 0;
+      return sum + (order.total_quantity - dispatched);
+    }, 0) || 0
   };
 
   return stats;
