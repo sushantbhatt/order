@@ -13,11 +13,19 @@ const OrdersPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [typeFilter, setTypeFilter] = useState<'all' | 'sale' | 'purchase'>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [customerFilter, setCustomerFilter] = useState('');
   const [supplierFilter, setSupplierFilter] = useState('');
+
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilters(prev => 
+      prev.includes(status)
+        ? prev.filter(s => s !== status)
+        : [...prev, status]
+    );
+  };
   
   useEffect(() => {
     const loadOrders = async () => {
@@ -45,7 +53,7 @@ const OrdersPage: React.FC = () => {
     
     if (!matchesSearch) return false;
     if (typeFilter !== 'all' && order.type !== typeFilter) return false;
-    if (statusFilter !== 'all' && order.status !== statusFilter) return false;
+    if (statusFilters.length > 0 && !statusFilters.includes(order.status)) return false;
     if (startDate && order.date < startDate) return false;
     if (endDate && order.date > endDate) return false;
     if (customerFilter && (!order.customer || !order.customer.toLowerCase().includes(customerFilter.toLowerCase()))) return false;
@@ -56,7 +64,7 @@ const OrdersPage: React.FC = () => {
 
   const clearFilters = () => {
     setTypeFilter('all');
-    setStatusFilter('all');
+    setStatusFilters([]);
     setStartDate('');
     setEndDate(new Date().toISOString().split('T')[0]);
     setCustomerFilter('');
@@ -122,18 +130,20 @@ const OrdersPage: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
-              <select
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="partial">Partial</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <div className="space-y-2">
+                {['pending', 'partial', 'completed', 'cancelled'].map((status) => (
+                  <label key={status} className="inline-flex items-center mr-4">
+                    <input
+                      type="checkbox"
+                      checked={statusFilters.includes(status)}
+                      onChange={() => handleStatusFilterChange(status)}
+                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                    />
+                    <span className="ml-2 text-sm text-gray-700 capitalize">{status}</span>
+                  </label>
+                ))}
+              </div>
             </div>
             
             <div>
@@ -289,7 +299,7 @@ const OrdersPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ₹{order.items.reduce((sum, item) => sum + (item.price), 0).toFixed(2)}
+                      ₹{order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       ₹{order.items.reduce((sum, item) => sum + item.commission, 0).toFixed(2)}
