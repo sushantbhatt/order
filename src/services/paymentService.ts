@@ -1,11 +1,12 @@
 import { supabase } from '../lib/supabase';
-import { Payment } from '../types';
+import { Payment, PaymentStatus } from '../types';
 
 interface CreatePaymentData {
   order_id: string;
   amount: number;
   payment_date: string;
   payment_mode: string;
+  payment_status: PaymentStatus;
   reference_number?: string;
   notes?: string;
 }
@@ -17,7 +18,8 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<Pay
     throw new Error('User must be logged in to create a payment');
   }
 
-  const { data, error } = await supabase
+  // Start a transaction
+  const { data: payment, error: paymentError } = await supabase
     .from('payments')
     .insert({
       ...paymentData,
@@ -26,19 +28,29 @@ export const createPayment = async (paymentData: CreatePaymentData): Promise<Pay
     .select()
     .single();
 
-  if (error) {
-    throw error;
+  if (paymentError) {
+    throw paymentError;
+  }
+
+  // Update order payment status
+  const { error: orderError } = await supabase
+    .from('orders')
+    .update({ payment_status: paymentData.payment_status })
+    .eq('id', paymentData.order_id);
+
+  if (orderError) {
+    throw orderError;
   }
 
   return {
-    id: data.id,
-    orderId: data.order_id,
-    amount: data.amount,
-    paymentDate: data.payment_date,
-    paymentMode: data.payment_mode,
-    referenceNumber: data.reference_number,
-    notes: data.notes,
-    createdAt: data.created_at
+    id: payment.id,
+    orderId: payment.order_id,
+    amount: payment.amount,
+    paymentDate: payment.payment_date,
+    paymentMode: payment.payment_mode,
+    referenceNumber: payment.reference_number,
+    notes: payment.notes,
+    createdAt: payment.created_at
   };
 };
 
