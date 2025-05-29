@@ -17,6 +17,11 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
 
   const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
 
+  // Sort payments by date in descending order to get the latest payment first
+  const sortedPayments = [...payments].sort((a, b) => 
+    new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
+  );
+
   return (
     <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
       <table className="min-w-full divide-y divide-gray-300">
@@ -46,7 +51,7 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200 bg-white">
-          {payments.map((payment) => (
+          {sortedPayments.map((payment) => (
             <tr key={payment.id}>
               <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                 {payment.orderId}
