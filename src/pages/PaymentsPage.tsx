@@ -71,6 +71,7 @@ const PaymentsPage: React.FC = () => {
       setPayments(updatedPayments);
       setOrder(updatedOrder);
       setOrders(updatedOrders);
+      setSelectedOrder(updatedOrder);
     }
   };
 
