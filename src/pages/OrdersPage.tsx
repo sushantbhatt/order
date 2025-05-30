@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllOrders } from '../services/orderService';
 import { Order } from '../types';
-import { formatDateForDisplay } from '../utils/helpers';
-import { Package, Truck, Search, Filter, X, ChevronDown } from 'lucide-react';
+import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
+import { Package, Truck, Search, Filter, X, ChevronDown, Box, TrendingUp, TrendingDown } from 'lucide-react';
+import OrderList from '../components/OrderList';
 
 const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,14 +33,6 @@ const OrdersPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleStatusFilterChange = (status: string) => {
-    setStatusFilters(prev => 
-      prev.includes(status)
-        ? prev.filter(s => s !== status)
-        : [...prev, status]
-    );
-  };
-  
   useEffect(() => {
     const loadOrders = async () => {
       try {
@@ -56,6 +49,23 @@ const OrdersPage: React.FC = () => {
     
     loadOrders();
   }, []);
+
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilters(prev => 
+      prev.includes(status)
+        ? prev.filter(s => s !== status)
+        : [...prev, status]
+    );
+  };
+
+  const clearFilters = () => {
+    setTypeFilter('all');
+    setStatusFilters([]);
+    setStartDate('');
+    setEndDate(new Date().toISOString().split('T')[0]);
+    setCustomerFilter('');
+    setSupplierFilter('');
+  };
 
   const filteredOrders = orders.filter(order => {
     const query = searchQuery.toLowerCase();
@@ -75,24 +85,31 @@ const OrdersPage: React.FC = () => {
     return true;
   });
 
-  const clearFilters = () => {
-    setTypeFilter('all');
-    setStatusFilters([]);
-    setStartDate('');
-    setEndDate(new Date().toISOString().split('T')[0]);
-    setCustomerFilter('');
-    setSupplierFilter('');
-  };
-
   const handleRowClick = (orderId: string) => {
     navigate(`/orders/${orderId}`);
   };
 
-  const getStatusLabel = () => {
-    if (statusFilters.length === 0) return 'All Statuses';
-    if (statusFilters.length === 1) return statusFilters[0].charAt(0).toUpperCase() + statusFilters[0].slice(1);
-    return `${statusFilters.length} statuses selected`;
-  };
+  // Calculate KPI metrics
+  const salesOrders = filteredOrders.filter(order => order.type === 'sale');
+  const purchaseOrders = filteredOrders.filter(order => order.type === 'purchase');
+
+  const totalSalesQuantity = salesOrders.reduce((sum, order) => sum + order.totalQuantity, 0);
+  const totalSalesDispatched = salesOrders.reduce((sum, order) => sum + (order.totalQuantity - order.remainingQuantity), 0);
+  const totalSalesRemaining = salesOrders.reduce((sum, order) => sum + order.remainingQuantity, 0);
+
+  const totalPurchaseQuantity = purchaseOrders.reduce((sum, order) => sum + order.totalQuantity, 0);
+  const totalPurchaseDispatched = purchaseOrders.reduce((sum, order) => sum + (order.totalQuantity - order.remainingQuantity), 0);
+  const totalPurchaseRemaining = purchaseOrders.reduce((sum, order) => sum + order.remainingQuantity, 0);
+
+  const totalSalesAmount = salesOrders.reduce((sum, order) => 
+    sum + order.items.reduce((itemSum, item) => itemSum + (item.price * item.quantity), 0), 0);
+  const totalSalesCommission = salesOrders.reduce((sum, order) => 
+    sum + order.items.reduce((itemSum, item) => itemSum + (item.commission * item.quantity), 0), 0);
+
+  const totalPurchaseAmount = purchaseOrders.reduce((sum, order) => 
+    sum + order.items.reduce((itemSum, item) => itemSum + (item.price * item.quantity), 0), 0);
+  const totalPurchaseCommission = purchaseOrders.reduce((sum, order) => 
+    sum + order.items.reduce((itemSum, item) => itemSum + (item.commission * item.quantity), 0), 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
@@ -149,13 +166,19 @@ const OrdersPage: React.FC = () => {
             </div>
             
             <div className="relative" ref={statusDropdownRef}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-gray-700">Status</label>
               <button
                 type="button"
-                className="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm mt-1"
                 onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
               >
-                <span className="block truncate">{getStatusLabel()}</span>
+                <span className="block truncate">
+                  {statusFilters.length === 0 
+                    ? 'All Statuses' 
+                    : statusFilters.length === 1 
+                    ? statusFilters[0].charAt(0).toUpperCase() + statusFilters[0].slice(1)
+                    : `${statusFilters.length} statuses selected`}
+                </span>
                 <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                   <ChevronDown className="h-4 w-4 text-gray-400" />
                 </span>
@@ -231,6 +254,91 @@ const OrdersPage: React.FC = () => {
         </div>
       )}
 
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
+              <Box className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Sales Quantity</p>
+              <div className="space-y-1">
+                <p className="text-lg font-semibold text-gray-900">
+                  Total: {totalSalesQuantity.toFixed(2)}
+                </p>
+                <p className="text-sm text-amber-600">
+                  Dispatched: {totalSalesDispatched.toFixed(2)}
+                </p>
+                <p className="text-sm text-red-600">
+                  Remaining: {totalSalesRemaining.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 bg-emerald-100 rounded-md p-3">
+              <Box className="h-6 w-6 text-emerald-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Purchase Quantity</p>
+              <div className="space-y-1">
+                <p className="text-lg font-semibold text-gray-900">
+                  Total: {totalPurchaseQuantity.toFixed(2)}
+                </p>
+                <p className="text-sm text-amber-600">
+                  Dispatched: {totalPurchaseDispatched.toFixed(2)}
+                </p>
+                <p className="text-sm text-red-600">
+                  Remaining: {totalPurchaseRemaining.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
+              <TrendingUp className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Sales Amount</p>
+              <div className="space-y-1">
+                <p className="text-lg font-semibold text-gray-900">
+                  {formatCurrency(totalSalesAmount)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Commission: {formatCurrency(totalSalesCommission)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 bg-emerald-100 rounded-md p-3">
+              <TrendingDown className="h-6 w-6 text-emerald-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Purchase Amount</p>
+              <div className="space-y-1">
+                <p className="text-lg font-semibold text-gray-900">
+                  {formatCurrency(totalPurchaseAmount)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Commission: {formatCurrency(totalPurchaseCommission)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {error && (
         <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
           <div className="flex">
@@ -267,102 +375,7 @@ const OrdersPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Order ID
-                  </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Customer/Supplier
-                  </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total Qty
-                  </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Remaining
-                  </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price (₹)
-                  </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Commission (₹)
-                  </th>
-                  <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredOrders.map((order) => (
-                  <tr
-                    key={order.id}
-                    onClick={() => handleRowClick(order.id)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors duration-150"
-                  >
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      <div className="flex items-center">
-                        {order.type === 'sale' ? (
-                          <Truck className="h-5 w-5 text-blue-600 mr-2" />
-                        ) : (
-                          <Package className="h-5 w-5 text-emerald-600 mr-2" />
-                        )}
-                        <span className="hidden sm:inline">{order.id}</span>
-                        <span className="sm:hidden">{order.id.slice(-8)}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
-                      {order.type}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDateForDisplay(order.date)}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {order.type === 'sale' ? order.customer : order.supplier}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {order.totalQuantity?.toFixed(2)}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`${
-                        order.remainingQuantity > 0 ? 'text-amber-600' : 'text-green-600'
-                      } font-medium`}>
-                        {order.remainingQuantity?.toFixed(2)}
-                      </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ₹{order.items.reduce((sum, item) => sum + item.price, 0).toFixed(2)}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      ₹{order.items.reduce((sum, item) => sum + item.commission, 0).toFixed(2)}
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        order.status === 'completed'
-                          ? 'bg-green-100 text-green-800'
-                          : order.status === 'partial'
-                          ? 'bg-amber-100 text-amber-800'
-                          : order.status === 'cancelled'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <OrderList orders={filteredOrders} onOrderSelect={handleRowClick} />
       )}
     </div>
   );
