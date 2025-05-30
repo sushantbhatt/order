@@ -165,6 +165,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus = 'pen
             onChange={handleChange}
             className="w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
           >
+            <option value="pending">Pending</option>
             <option value="partial">Partial</option>
             <option value="completed">Completed</option>
           </select>
