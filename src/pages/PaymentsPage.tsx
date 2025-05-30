@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import PaymentList from '../components/PaymentList';
 import PaymentForm from '../components/PaymentForm';
 import OrderList from '../components/OrderList';
-import { Payment, Order, OrderType } from '../types';
+import { Payment, Order, OrderType, PaymentStatus } from '../types';
 import { getPaymentsByOrderId } from '../services/paymentService';
 import { getOrderById, getAllOrders } from '../services/orderService';
 import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
@@ -24,6 +23,7 @@ const PaymentsPage: React.FC = () => {
   const [supplierFilter, setSupplierFilter] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | PaymentStatus>('all');
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -107,6 +107,7 @@ const PaymentsPage: React.FC = () => {
     setSupplierFilter('');
     setStartDate('');
     setEndDate(new Date().toISOString().split('T')[0]);
+    setPaymentStatusFilter('all');
   };
 
   const filteredOrders = orders.filter(order => {
@@ -122,6 +123,7 @@ const PaymentsPage: React.FC = () => {
     if (supplierFilter && (!order.supplier || !order.supplier.toLowerCase().includes(supplierFilter.toLowerCase()))) return false;
     if (startDate && order.date < startDate) return false;
     if (endDate && order.date > endDate) return false;
+    if (paymentStatusFilter !== 'all' && order.paymentStatus !== paymentStatusFilter) return false;
     
     return true;
   });
@@ -187,6 +189,20 @@ const PaymentsPage: React.FC = () => {
                     <option value="all">All Types</option>
                     <option value="sale">Sales</option>
                     <option value="purchase">Purchases</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Payment Status</label>
+                  <select
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    value={paymentStatusFilter}
+                    onChange={(e) => setPaymentStatusFilter(e.target.value as 'all' | PaymentStatus)}
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="partial">Partial</option>
+                    <option value="completed">Completed</option>
                   </select>
                 </div>
                 
