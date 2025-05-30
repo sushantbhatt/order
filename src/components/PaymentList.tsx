@@ -33,6 +33,17 @@ const getPaymentModeLabel = (mode: PaymentMode): string => {
   }
 };
 
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case 'completed':
+      return 'bg-green-100 text-green-800';
+    case 'partial':
+      return 'bg-amber-100 text-amber-800';
+    default:
+      return 'bg-red-100 text-red-800';
+  }
+};
+
 const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
   if (!payments || payments.length === 0) {
     return (
@@ -55,6 +66,9 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               Mode
+            </th>
+            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+              Status
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               Reference
@@ -82,6 +96,11 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
                   <span>{getPaymentModeLabel(payment.paymentMode)}</span>
                 </div>
               </td>
+              <td className="whitespace-nowrap px-3 py-4 text-sm">
+                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(payment.paymentStatus)}`}>
+                  {payment.paymentStatus}
+                </span>
+              </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                 {payment.referenceNumber || '-'}
               </td>
@@ -99,7 +118,7 @@ const PaymentList: React.FC<PaymentListProps> = ({ payments }) => {
             <td className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               {formatCurrency(payments.reduce((sum, payment) => sum + payment.amount, 0))}
             </td>
-            <td colSpan={3}></td>
+            <td colSpan={4}></td>
           </tr>
         </tfoot>
       </table>

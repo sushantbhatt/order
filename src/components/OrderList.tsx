@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Truck } from 'lucide-react';
+import { Package, Truck, CreditCard } from 'lucide-react';
 import { Order } from '../types';
 import { formatDateForDisplay } from '../utils/helpers';
 
@@ -16,6 +16,19 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
       </div>
     );
   }
+
+  const getStatusColor = (status: string): string => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'partial':
+        return 'bg-amber-100 text-amber-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-blue-100 text-blue-800';
+    }
+  };
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -37,6 +50,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Total Qty
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Payment Status
@@ -74,13 +90,13 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
                   {order.totalQuantity?.toFixed(2)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    order.paymentStatus === 'completed'
-                      ? 'bg-green-100 text-green-800'
-                      : order.paymentStatus === 'partial'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                    {order.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.paymentStatus)}`}>
+                    <CreditCard className="h-4 w-4 mr-1" />
                     {order.paymentStatus}
                   </span>
                 </td>
