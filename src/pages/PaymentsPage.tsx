@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PaymentForm from '../components/PaymentForm';
 import OrderList from '../components/OrderList';
@@ -6,12 +6,13 @@ import { Payment, Order, OrderType, PaymentStatus } from '../types';
 import { getPaymentsByOrderId } from '../services/paymentService';
 import { getOrderById, getAllOrders } from '../services/orderService';
 import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
-import { CreditCard, ArrowLeft, Filter, X, Search } from 'lucide-react';
+import { CreditCard, ArrowLeft, Filter, X, Search, ChevronDown } from 'lucide-react';
 
 const PaymentsPage: React.FC = () => {
   const { id } = useParams();
   const orderId = id ? decodeURIComponent(id) : '';
   const navigate = useNavigate();
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
 
   const [payments, setPayments] = useState<Payment[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -26,6 +27,18 @@ const PaymentsPage: React.FC = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentStatusFilters, setPaymentStatusFilters] = useState<PaymentStatus[]>([]);
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setIsStatusDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -42,15 +55,15 @@ const PaymentsPage: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!id) {
+      if (!orderId) {
         setIsLoading(false);
         return;
       }
 
       try {
         const [orderData, paymentsData] = await Promise.all([
-          getOrderById(id),
-          getPaymentsByOrderId(id)
+          getOrderById(orderId),
+          getPaymentsByOrderId(orderId)
         ]);
 
         if (!orderData) {
@@ -68,7 +81,7 @@ const PaymentsPage: React.FC = () => {
     };
 
     fetchData();
-  }, [id]);
+  }, [orderId]);
 
   const handlePaymentSuccess = async () => {
     if (selectedOrder) {
@@ -108,6 +121,12 @@ const PaymentsPage: React.FC = () => {
         ? prev.filter(s => s !== status)
         : [...prev, status]
     );
+  };
+
+  const getStatusLabel = () => {
+    if (paymentStatusFilters.length === 0) return 'All Statuses';
+    if (paymentStatusFilters.length === 1) return paymentStatusFilters[0].charAt(0).toUpperCase() + paymentStatusFilters[0].slice(1);
+    return `${paymentStatusFilters.length} statuses selected`;
   };
 
   const clearFilters = () => {
@@ -202,21 +221,42 @@ const PaymentsPage: React.FC = () => {
                   </select>
                 </div>
 
-                <div>
+                <div className="relative" ref={statusDropdownRef}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
-                  <div className="space-y-2">
-                    {(['pending', 'partial', 'completed'] as PaymentStatus[]).map((status) => (
-                      <label key={status} className="inline-flex items-center mr-4">
-                        <input
-                          type="checkbox"
-                          checked={paymentStatusFilters.includes(status)}
-                          onChange={() => handlePaymentStatusFilterChange(status)}
-                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                        />
-                        <span className="ml-2 text-sm text-gray-700 capitalize">{status}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <button
+                    type="button"
+                    className="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                  >
+                    <span className="block truncate">{getStatusLabel()}</span>
+                    <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </span>
+                  </button>
+
+                  {isStatusDropdownOpen && (
+                    <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                      {(['pending', 'partial', 'completed'] as PaymentStatus[]).map((status) => (
+                        <div
+                          key={status}
+                          className="relative py-2 pl-3 pr-9 cursor-pointer hover:bg-gray-100"
+                          onClick={() => handlePaymentStatusFilterChange(status)}
+                        >
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={paymentStatusFilters.includes(status)}
+                              onChange={() => {}}
+                              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="ml-3 block font-normal capitalize">
+                              {status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 
                 <div>
