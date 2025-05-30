@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TruckIcon } from 'lucide-react';
+import { TruckIcon, AlertCircle } from 'lucide-react';
 import { Order, OrderStatus } from '../types';
 import { createDispatch } from '../services/orderService';
 import { getTodayDate } from '../utils/helpers';
@@ -18,6 +18,23 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
   const [status, setStatus] = useState<OrderStatus>(order.status);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  if (order.status === 'completed') {
+    return (
+      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <AlertCircle className="h-5 w-5 text-yellow-400" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-yellow-700">
+              This order has been marked as completed. No further dispatches can be recorded.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +79,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 bg-white shadow-md rounded-lg p-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex items-center text-lg font-semibold text-gray-800 mb-2">
         <TruckIcon className="mr-2 text-blue-600" size={20} /> Record Dispatch
       </div>
