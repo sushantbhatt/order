@@ -18,7 +18,8 @@ const HomePage: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    month: new Date().toISOString().slice(0, 7), // Current month in YYYY-MM format
+    startDate: '',
+    endDate: new Date().toISOString().split('T')[0],
     supplier: '',
     customer: '',
     orderId: ''
@@ -55,14 +56,27 @@ const HomePage: React.FC = () => {
         <h2 className="text-lg font-semibold text-gray-700 mb-4">Filters</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label htmlFor="month" className="block text-sm font-medium text-gray-700">
-              Month
+            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
+              From Date
             </label>
             <input
-              type="month"
-              id="month"
-              value={filters.month}
-              onChange={(e) => setFilters({ ...filters, month: e.target.value })}
+              type="date"
+              id="startDate"
+              value={filters.startDate}
+              onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">
+              To Date
+            </label>
+            <input
+              type="date"
+              id="endDate"
+              value={filters.endDate}
+              onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             />
           </div>

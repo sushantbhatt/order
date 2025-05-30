@@ -1,7 +1,8 @@
 import { supabase } from '../lib/supabase';
 
 export const getDashboardStats = async (filters: {
-  month?: string;
+  startDate?: string;
+  endDate?: string;
   supplier?: string;
   customer?: string;
   orderId?: string;
@@ -15,11 +16,12 @@ export const getDashboardStats = async (filters: {
     `);
 
   // Apply filters
-  if (filters.month) {
-    const startDate = new Date(filters.month);
-    const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
-    query = query.gte('date', startDate.toISOString().split('T')[0])
-                 .lte('date', endDate.toISOString().split('T')[0]);
+  if (filters.startDate) {
+    query = query.gte('date', filters.startDate);
+  }
+  
+  if (filters.endDate) {
+    query = query.lte('date', filters.endDate);
   }
   
   if (filters.supplier) {
