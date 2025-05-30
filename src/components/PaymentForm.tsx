@@ -16,7 +16,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus, onSuc
     amount: '',
     payment_date: new Date().toISOString().split('T')[0],
     payment_mode: 'cash',
-    payment_status: 'partial' as PaymentStatus,
+    payment_status: paymentStatus || 'partial' as PaymentStatus,
     reference_number: '',
     notes: ''
   });
@@ -67,7 +67,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus, onSuc
         amount: '',
         payment_date: new Date().toISOString().split('T')[0],
         payment_mode: 'cash',
-        payment_status: 'partial',
+        payment_status: paymentStatus || 'partial',
         reference_number: '',
         notes: ''
       });
