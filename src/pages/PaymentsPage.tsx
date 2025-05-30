@@ -9,8 +9,10 @@ import { formatDateForDisplay, formatCurrency } from '../utils/helpers';
 import { CreditCard, ArrowLeft, Filter, X, Search } from 'lucide-react';
 
 const PaymentsPage: React.FC = () => {
-  const { id } = useParams<{ id?: string }>();
+  const { id } = useParams();
+  const orderId = id ? decodeURIComponent(id) : '';
   const navigate = useNavigate();
+
   const [payments, setPayments] = useState<Payment[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -23,7 +25,7 @@ const PaymentsPage: React.FC = () => {
   const [supplierFilter, setSupplierFilter] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
-  const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | PaymentStatus>('all');
+  const [paymentStatusFilters, setPaymentStatusFilters] = useState<PaymentStatus[]>([]);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -100,6 +102,14 @@ const PaymentsPage: React.FC = () => {
     }
   };
 
+  const handlePaymentStatusFilterChange = (status: PaymentStatus) => {
+    setPaymentStatusFilters(prev => 
+      prev.includes(status)
+        ? prev.filter(s => s !== status)
+        : [...prev, status]
+    );
+  };
+
   const clearFilters = () => {
     setSearchQuery('');
     setTypeFilter('all');
@@ -107,7 +117,7 @@ const PaymentsPage: React.FC = () => {
     setSupplierFilter('');
     setStartDate('');
     setEndDate(new Date().toISOString().split('T')[0]);
-    setPaymentStatusFilter('all');
+    setPaymentStatusFilters([]);
   };
 
   const filteredOrders = orders.filter(order => {
@@ -123,7 +133,7 @@ const PaymentsPage: React.FC = () => {
     if (supplierFilter && (!order.supplier || !order.supplier.toLowerCase().includes(supplierFilter.toLowerCase()))) return false;
     if (startDate && order.date < startDate) return false;
     if (endDate && order.date > endDate) return false;
-    if (paymentStatusFilter !== 'all' && order.paymentStatus !== paymentStatusFilter) return false;
+    if (paymentStatusFilters.length > 0 && !paymentStatusFilters.includes(order.paymentStatus)) return false;
     
     return true;
   });
@@ -193,17 +203,20 @@ const PaymentsPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Payment Status</label>
-                  <select
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    value={paymentStatusFilter}
-                    onChange={(e) => setPaymentStatusFilter(e.target.value as 'all' | PaymentStatus)}
-                  >
-                    <option value="all">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="partial">Partial</option>
-                    <option value="completed">Completed</option>
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+                  <div className="space-y-2">
+                    {(['pending', 'partial', 'completed'] as PaymentStatus[]).map((status) => (
+                      <label key={status} className="inline-flex items-center mr-4">
+                        <input
+                          type="checkbox"
+                          checked={paymentStatusFilters.includes(status)}
+                          onChange={() => handlePaymentStatusFilterChange(status)}
+                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                        />
+                        <span className="ml-2 text-sm text-gray-700 capitalize">{status}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 
                 <div>
