@@ -102,14 +102,20 @@ const OrdersPage: React.FC = () => {
   const totalPurchaseRemaining = purchaseOrders.reduce((sum, order) => sum + order.remainingQuantity, 0);
 
   const totalSalesAmount = salesOrders.reduce((sum, order) => 
-    sum + order.items.reduce((itemSum, item) => itemSum + (item.price * item.quantity), 0), 0);
+    sum + order.items.reduce((itemSum, item) => 
+      itemSum + ((item.price + item.commission) * item.quantity), 0), 0);
+
   const totalSalesCommission = salesOrders.reduce((sum, order) => 
-    sum + order.items.reduce((itemSum, item) => itemSum + (item.commission * item.quantity), 0), 0);
+    sum + order.items.reduce((itemSum, item) => 
+      itemSum + (item.commission * item.quantity), 0), 0);
 
   const totalPurchaseAmount = purchaseOrders.reduce((sum, order) => 
-    sum + order.items.reduce((itemSum, item) => itemSum + (item.price * item.quantity), 0), 0);
+    sum + order.items.reduce((itemSum, item) => 
+      itemSum + ((item.price + item.commission) * item.quantity), 0), 0);
+
   const totalPurchaseCommission = purchaseOrders.reduce((sum, order) => 
-    sum + order.items.reduce((itemSum, item) => itemSum + (item.commission * item.quantity), 0), 0);
+    sum + order.items.reduce((itemSum, item) => 
+      itemSum + (item.commission * item.quantity), 0), 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
@@ -382,3 +388,5 @@ const OrdersPage: React.FC = () => {
 };
 
 export default OrdersPage;
+
+export default OrdersPage
