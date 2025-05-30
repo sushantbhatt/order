@@ -41,6 +41,7 @@ export interface Dispatch {
   invoiceNumber?: string;
   notes?: string;
   createdAt: string;
+  status?: OrderStatus;
 }
 
 export interface Payment {

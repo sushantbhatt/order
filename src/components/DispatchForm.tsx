@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TruckIcon } from 'lucide-react';
-import { Order } from '../types';
+import { Order, OrderStatus } from '../types';
 import { createDispatch } from '../services/orderService';
 import { getTodayDate } from '../utils/helpers';
 
@@ -15,6 +15,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
   const [dispatchPrice, setDispatchPrice] = useState<number | null>(null);
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [notes, setNotes] = useState('');
+  const [status, setStatus] = useState<OrderStatus>(order.status);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +41,8 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
         quantity,
         dispatchPrice,
         invoiceNumber,
-        notes
+        notes,
+        status
       });
       
       onDispatchCreated();
@@ -50,6 +52,7 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
       setDispatchPrice(null);
       setInvoiceNumber('');
       setNotes('');
+      setStatus(order.status);
     } catch (error) {
       console.error('Error creating dispatch:', error);
       setError('Failed to create dispatch. Please try again.');
@@ -127,6 +130,24 @@ const DispatchForm: React.FC<DispatchFormProps> = ({ order, onDispatchCreated })
             onChange={(e) => setInvoiceNumber(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           />
+        </div>
+
+        <div>
+          <label htmlFor="order-status" className="block text-sm font-medium text-gray-700">
+            Order Status
+          </label>
+          <select
+            id="order-status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as OrderStatus)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            required
+          >
+            <option value="pending">Pending</option>
+            <option value="partial">Partial</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
         </div>
       </div>
       

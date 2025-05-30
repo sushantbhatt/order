@@ -313,14 +313,12 @@ export const createDispatch = async (orderId: string, dispatchData: Partial<Disp
   const dispatchedQuantity = currentOrder.dispatches.reduce((sum, d) => sum + (d.quantity || 0), 0) + (dispatchData.quantity || 0);
   const remainingQuantity = totalQuantity - dispatchedQuantity;
 
-  // Update order status based on dispatched quantity
-  const newStatus = dispatchedQuantity >= totalQuantity ? 'completed' : 'partial';
-
+  // Update order with new status and remaining quantity
   const { data: updatedOrder, error: updateError } = await supabase
     .from('orders')
     .update({
       remaining_quantity: remainingQuantity,
-      status: newStatus,
+      status: dispatchData.status,
       updated_at: new Date().toISOString()
     })
     .eq('id', orderId)
