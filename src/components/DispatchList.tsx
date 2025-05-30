@@ -24,13 +24,13 @@ const DispatchList: React.FC<DispatchListProps> = ({ dispatches }) => {
               Date
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-              Invoice #
-            </th>
-            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               Quantity
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               Price (₹)
+            </th>
+            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+              Invoice #
             </th>
             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
               Notes
@@ -44,15 +44,15 @@ const DispatchList: React.FC<DispatchListProps> = ({ dispatches }) => {
                 {formatDateForDisplay(dispatch.date)}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {dispatch.invoiceNumber || '-'}
-              </td>
-              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                {dispatch.quantity?.toFixed(2) || '-'}
+                {dispatch.quantity?.toFixed(2)}
               </td>
               <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                 {dispatch.dispatchPrice ? `₹${dispatch.dispatchPrice.toFixed(2)}` : '-'}
               </td>
-              <td className="px-3 py-4 text-sm text-gray-500">
+              <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                {dispatch.invoiceNumber || '-'}
+              </td>
+              <td className="px-3 py-4 text-sm text-gray-500 max-w-xs truncate">
                 {dispatch.notes || '-'}
               </td>
             </tr>
