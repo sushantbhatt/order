@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PaymentForm from '../components/PaymentForm';
+import PaymentList from '../components/PaymentList';
 import OrderList from '../components/OrderList';
 import { Payment, Order, OrderType, PaymentStatus } from '../types';
 import { getPaymentsByOrderId } from '../services/paymentService';
