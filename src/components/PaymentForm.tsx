@@ -9,7 +9,7 @@ interface PaymentFormProps {
   onSuccess?: () => void;
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus = 'partial', onSuccess }) => {
+const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus = 'pending', onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -21,6 +21,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus = 'par
     notes: ''
   });
 
+  // If the order is already marked as completed, show a message instead of the form
   if (paymentStatus === 'completed') {
     return (
       <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
@@ -62,7 +63,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus = 'par
         onSuccess();
       }
       
-      // Reset form but keep the current payment status
+      // Reset form but preserve the payment status
       setFormData({
         amount: '',
         payment_date: new Date().toISOString().split('T')[0],
