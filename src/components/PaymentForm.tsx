@@ -9,14 +9,14 @@ interface PaymentFormProps {
   onSuccess?: () => void;
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus, onSuccess }) => {
+const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus = 'partial', onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     amount: '',
     payment_date: new Date().toISOString().split('T')[0],
     payment_mode: 'cash',
-    payment_status: paymentStatus || 'partial' as PaymentStatus,
+    payment_status: paymentStatus,
     reference_number: '',
     notes: ''
   });
@@ -62,12 +62,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus, onSuc
         onSuccess();
       }
       
-      // Reset form
+      // Reset form but keep the current payment status
       setFormData({
         amount: '',
         payment_date: new Date().toISOString().split('T')[0],
         payment_mode: 'cash',
-        payment_status: paymentStatus || 'partial',
+        payment_status: formData.payment_status,
         reference_number: '',
         notes: ''
       });
@@ -211,11 +211,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus, onSuc
           isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
         }`}
       >
-        {isSubmitting ? (
-          <>Processing...</>
-        ) : (
-          'Record Payment'
-        )}
+        {isSubmitting ? 'Processing...' : 'Record Payment'}
       </button>
     </form>
   );
