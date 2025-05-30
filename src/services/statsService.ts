@@ -45,13 +45,13 @@ export const getDashboardStats = async (filters: {
     totalSalesAmount: salesOrders
       .reduce((sum, order) => {
         const orderTotal = order.items.reduce((itemSum, item) => 
-          itemSum + ((item.quantity + item.commission) * item.price), 0);
+          itemSum + ((item.price + item.commission) * item.quantity), 0);
         return sum + orderTotal;
       }, 0) || 0,
     totalPurchaseAmount: purchaseOrders
       .reduce((sum, order) => {
         const orderTotal = order.items.reduce((itemSum, item) => 
-          itemSum + ((item.quantity + item.commission) * item.price), 0);
+          itemSum + ((item.price + item.commission) * item.quantity), 0);
         return sum + orderTotal;
       }, 0) || 0,
     salesQuantity: salesOrders.reduce((sum, order) => sum + order.total_quantity, 0) || 0,
