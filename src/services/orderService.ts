@@ -10,7 +10,12 @@ export const getAllOrders = async (): Promise<Order[]> => {
       *,
       items:order_items(*),
       dispatches:dispatches(*),
-      payments:payments(*)
+      payments(
+        amount,
+        payment_date,
+        payment_status,
+        created_at
+      )
     `)
     .order('created_at', { ascending: false });
 
@@ -22,9 +27,9 @@ export const getAllOrders = async (): Promise<Order[]> => {
     const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
     const remainingQuantity = totalQuantity - dispatchedQuantity;
 
-    // Get the latest payment status
+    // Get the latest payment based on created_at timestamp
     const latestPayment = order.payments?.sort((a, b) => 
-      new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )[0];
 
     return {
@@ -46,7 +51,12 @@ export const getOrdersByType = async (type: OrderType): Promise<Order[]> => {
       *,
       items:order_items(*),
       dispatches:dispatches(*),
-      payments:payments(*)
+      payments(
+        amount,
+        payment_date,
+        payment_status,
+        created_at
+      )
     `)
     .eq('type', type)
     .order('created_at', { ascending: false });
@@ -59,9 +69,9 @@ export const getOrdersByType = async (type: OrderType): Promise<Order[]> => {
     const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
     const remainingQuantity = totalQuantity - dispatchedQuantity;
 
-    // Get the latest payment status
+    // Get the latest payment based on created_at timestamp
     const latestPayment = order.payments?.sort((a, b) => 
-      new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )[0];
 
     return {
@@ -83,7 +93,12 @@ export const getOrderById = async (id: string): Promise<Order | null> => {
       *,
       items:order_items(*),
       dispatches:dispatches(*),
-      payments:payments(*)
+      payments(
+        amount,
+        payment_date,
+        payment_status,
+        created_at
+      )
     `)
     .eq('id', id)
     .single();
@@ -95,9 +110,9 @@ export const getOrderById = async (id: string): Promise<Order | null> => {
     const dispatchedQuantity = data.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
     const remainingQuantity = totalQuantity - dispatchedQuantity;
 
-    // Get the latest payment status
+    // Get the latest payment based on created_at timestamp
     const latestPayment = data.payments?.sort((a, b) => 
-      new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )[0];
 
     return {
@@ -207,7 +222,12 @@ export const filterOrdersByDateRange = async (startDate: string, endDate: string
       *,
       items:order_items(*),
       dispatches:dispatches(*),
-      payments:payments(*)
+      payments(
+        amount,
+        payment_date,
+        payment_status,
+        created_at
+      )
     `)
     .gte('date', startDate)
     .lte('date', endDate)
@@ -221,9 +241,9 @@ export const filterOrdersByDateRange = async (startDate: string, endDate: string
     const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
     const remainingQuantity = totalQuantity - dispatchedQuantity;
 
-    // Get the latest payment status
+    // Get the latest payment based on created_at timestamp
     const latestPayment = order.payments?.sort((a, b) => 
-      new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )[0];
 
     return {
@@ -245,7 +265,12 @@ export const searchOrders = async (query: string): Promise<Order[]> => {
       *,
       items:order_items(*),
       dispatches:dispatches(*),
-      payments:payments(*)
+      payments(
+        amount,
+        payment_date,
+        payment_status,
+        created_at
+      )
     `)
     .or(`customer.ilike.%${query}%,supplier.ilike.%${query}%,id.ilike.%${query}%`)
     .order('created_at', { ascending: false });
@@ -258,9 +283,9 @@ export const searchOrders = async (query: string): Promise<Order[]> => {
     const dispatchedQuantity = order.dispatches?.reduce((sum, dispatch) => sum + (dispatch.quantity || 0), 0) || 0;
     const remainingQuantity = totalQuantity - dispatchedQuantity;
 
-    // Get the latest payment status
+    // Get the latest payment based on created_at timestamp
     const latestPayment = order.payments?.sort((a, b) => 
-      new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )[0];
 
     return {
@@ -302,7 +327,17 @@ export const createDispatch = async (orderId: string, dispatchData: Partial<Disp
   // Get the current order with all dispatches
   const { data: currentOrder, error: orderError } = await supabase
     .from('orders')
-    .select('*, items:order_items(*), dispatches:dispatches(*), payments:payments(*)')
+    .select(`
+      *,
+      items:order_items(*),
+      dispatches:dispatches(*),
+      payments(
+        amount,
+        payment_date,
+        payment_status,
+        created_at
+      )
+    `)
     .eq('id', orderId)
     .single();
 
@@ -312,6 +347,11 @@ export const createDispatch = async (orderId: string, dispatchData: Partial<Disp
   const totalQuantity = currentOrder.total_quantity;
   const dispatchedQuantity = currentOrder.dispatches.reduce((sum, d) => sum + (d.quantity || 0), 0) + (dispatchData.quantity || 0);
   const remainingQuantity = totalQuantity - dispatchedQuantity;
+
+  // Get the latest payment based on created_at timestamp
+  const latestPayment = currentOrder.payments?.sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  )[0];
 
   // Update order with new status and remaining quantity
   const { data: updatedOrder, error: updateError } = await supabase
@@ -326,11 +366,6 @@ export const createDispatch = async (orderId: string, dispatchData: Partial<Disp
     .single();
 
   if (updateError) throw updateError;
-
-  // Get the latest payment status
-  const latestPayment = currentOrder.payments?.sort((a, b) => 
-    new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime()
-  )[0];
 
   return {
     dispatch,
