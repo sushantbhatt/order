@@ -39,7 +39,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
                 Total Qty
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                Payment Status
               </th>
             </tr>
           </thead>
@@ -75,15 +75,13 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onOrderSelect }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    order.status === 'completed'
+                    order.paymentStatus === 'completed'
                       ? 'bg-green-100 text-green-800'
-                      : order.status === 'partial'
+                      : order.paymentStatus === 'partial'
                       ? 'bg-amber-100 text-amber-800'
-                      : order.status === 'cancelled'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-blue-100 text-blue-800'
+                      : 'bg-red-100 text-red-800'
                   }`}>
-                    {order.status}
+                    {order.paymentStatus}
                   </span>
                 </td>
               </tr>
