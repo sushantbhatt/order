@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Calendar, CreditCard, FileText, BanknoteIcon } from 'lucide-react';
+import { Calendar, CreditCard, FileText, BanknoteIcon, AlertCircle } from 'lucide-react';
 import { createPayment } from '../services/paymentService';
 import { PaymentStatus } from '../types';
 
 interface PaymentFormProps {
   orderId: string;
+  paymentStatus?: PaymentStatus;
   onSuccess?: () => void;
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
+const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, paymentStatus, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -19,6 +20,23 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
     reference_number: '',
     notes: ''
   });
+
+  if (paymentStatus === 'completed') {
+    return (
+      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <AlertCircle className="h-5 w-5 text-yellow-400" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-yellow-700">
+              Payment for this order has been completed. No further payments can be recorded.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -194,13 +212,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, onSuccess }) => {
         }`}
       >
         {isSubmitting ? (
-          <>
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white\" xmlns="http://www.w3.org/2000/svg\" fill="none\" viewBox="0 0 24 24">
-              <circle className="opacity-25\" cx="12\" cy="12\" r="10\" stroke="currentColor\" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Processing...
-          </>
+          <>Processing...</>
         ) : (
           'Record Payment'
         )}
