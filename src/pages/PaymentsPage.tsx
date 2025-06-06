@@ -337,14 +337,14 @@ const PaymentsPage: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">Payments for Order {selectedOrder.id}</h1>
           <p className="text-gray-600 mt-1">
             {selectedOrder.type === 'sale' ? 'Sales' : 'Purchase'} order • {formatDateForDisplay(selectedOrder.date)}
           </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
+        <div className="flex items-center gap-2 px-0 py-2 bg-gray-100 rounded-lg">
           <CreditCard className="h-5 w-5 text-gray-500" />
           <span className="font-medium">Payment Status:</span>
           <span className={`capitalize ${

@@ -126,7 +126,7 @@ const OrderDetailPage: React.FC = () => {
                       <span>{formatCurrency(itemTotal)}</span>
                     </div>
                     <div className="text-sm text-gray-600">
-                      {item.quantity} {item.unit} • ₹{item.price}/unit + ₹{item.commission} commission
+                      {item.quantity} {item.unit} • ₹{item.price} /{item.unit}  + ₹{item.commission} commission
                     </div>
                   </div>
                 );

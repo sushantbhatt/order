@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LogIn, LogOut, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js'; ///updated
 
 const AuthButton: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
